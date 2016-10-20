@@ -1,0 +1,92 @@
+Description of xplot.pro
+
+This is a widget program that simulates both the f/t spectrograms from the
+cluster spacecraft and the cross-correlation plots between two spacecraft
+as simulated from Ivar Christophers cross-correlation program.
+
+The data files that this program reads are stored in the path
+/data1/awb/
+
+You only need to manually read in the *.dat1 files.  The program reads in 
+the rest of the appropriate files automatically.
+
+There are two types of files you can load in.
+
+1. time-type 1 (tt1). These are the straight up timing values of every ray
+   created extrapolated to the grid points. Plot a bunch of these frequencies
+   and you end up with a straight up Freq/Time spectrogram for one or more
+   sc. Can plot up to two different Sc at one time. CANNOT USE THESE FILES
+   TO MAKE A CORRELATION PLOT WITH 'Plot correlation'. You will only end up
+   with the straight up timing values.
+
+2. time-type 3 (tt3). These are the are the timing differences of the rays
+   from the first sc subtracted from those of the second spacecraft, 
+   for each frequency. Plot a bunch of these frequencies and you end up with
+   a straight up cross-correlation plot between two sc. Can only plot
+   the tt3 values for one Sc combo at a time. Ex. sc1-sc3 
+
+
+Explanation of buttons in xplot.pro
+
+'Find file (*.dat1)' - load *.dat1 files from /data1/awb/
+
+'Read in files' - read in all the selected files 
+
+'1-8' in vertical column - these buttons are selected to indicate which
+files have been read in
+
+'inc rays' - xplot.pro will only read in the ray paths if this button is 
+selected. It takes a while to read all of them in and they are only 
+necessary sometimes.
+
+'1st freq' vertical column
+'last freq' vertical column - for tt1 you can make time difference plots
+between these two selected frequencies. This is to help locate areas where the
+tt1 straight up timing values (from the 'Plot correlation' button) are 
+desired. These buttons line up with the 'no file sel' buttons and are linked.
+The only effect these buttons have on the 'Plot correlation' procedure is
+to put the selected frequencies in red so you can tell which ones appear
+on the upper plot window.  
+
+'no file sel' - Select the appropriate read-in files for plotting. The selected
+ones appear in the box on the RHS.
+
+'Original zoom' - takes you back to xmin=3,xmax=5,ymin=-2,ymax=2
+
+'Plot' - Plot the selected files with colorbar
+
+'Single plot' - fills the top plot screen with a single plot so you can
+click on the screen to select a location or to zoom in.
+
+'Plot diff' - plots the delta-time values between the '1st freq' and 
+'last freq' files selected.
+
+'Single plot diff' - Same as above but fills screen.
+
+'Plot correlation' - makes a correlation plot if you have loaded tt3 files,
+or makes a straight up timing value plot if you have loaded tt1 files 
+at the location you have clicked on in the top window. Must click on a location
+in the 'Single plot' or 'Single plot diff' window for this to work. 
+This procedure plots a value for every file loaded. 
+Points plotted in red indicate the files you have selected for the difference
+plot in the top window.
+
+'Delta-time filters' - use to declutter the 'single plot' or 'Single plot diff'
+so you can more easily select a region with a specific timing value.
+
+'print to ps' - select this button and then push a plot button to make
+a postscript file.
+
+Zoom in - Click and drag the mouse on the upper window. Don't zoom in too far
+     because the coordinate calculation looses accuracy.
+
+
+;#######################################################
+Things to watch out for
+
+1. If you want the straight up timing values for a number of 
+   plots select the final frequency for both the 'first freq'
+   and 'last freq' plot otherwise the plots will be cut off
+   at the selected frequencies.
+
+;#######################################################
