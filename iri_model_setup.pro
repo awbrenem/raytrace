@@ -7,30 +7,30 @@
 ;i.e. convert the point [smlong,0,6370] to geographic coord
 
 
-;This is definitely working. I get almost identical results if I 
+;This is definitely working. I get almost identical results if I
 ;compare to the Interactive map to get geomagnetic or geographic coordinates:
 ;http://modelweb.gsfc.nasa.gov/models/cgm/cgm.html
-;Also, if I trace a ray at mlat=0 at 1000 km then I get the same values that 
-;were returned for the supposedly equal geographic coord. 
+;Also, if I trace a ray at mlat=0 at 1000 km then I get the same values that
+;were returned for the supposedly equal geographic coord.
 
 ;Program first returns the values for inputting into the IRI model. It then returns
-;geographic values at the position of the sc for testing of the model. 
+;geographic values at the position of the sc for testing of the model.
 
 ;Procedure: Input the model parameters to set up the model.
 ;	Then tweak the model so that the trace_ta.txt values at sc match those of the
-;   model at the sc position. 
+;   model at the sc position.
 ;
-;There are two good approaches to tweaking. 
-;	1. First adjust the ion ratios (usually by first getting O+ right, then messing with He+), then adjust density. 
+;There are two good approaches to tweaking.
+;	1. First adjust the ion ratios (usually by first getting O+ right, then messing with He+), then adjust density.
 ;	2. Adjust the temp so that correct ion ratios are obtained. Then make small tweaks to density.
-;		I find that this method works better. A heated ionosphere will up ratios of heavy ions. 
+;		I find that this method works better. A heated ionosphere will up ratios of heavy ions.
 ;		This heating could easily occur b/c of transmitter signals.
-;Often one or the other of these approaches requires unreasonable input values while the other 
+;Often one or the other of these approaches requires unreasonable input values while the other
 ;	works well. Also, if the sc is beyond 2000 km alt, then just test at 2000 km.
 
 ;WARNING: ALWAYS HAVE YOUR REFERENCE LEVEL BELOW THE ALTITUDE OF THE RAYS, OTHERWISE
 ;MODEL VALUES AREN'T REALISTIC. I.E. DON'T USE 1000 KM AS REFERENCE IF YOU ARE TRACING
-;RAYS AT 500 KM. 
+;RAYS AT 500 KM.
 
 
 sc = 'STA'
@@ -144,10 +144,3 @@ print,'TIME TO INPUT IS: ' + hr + '.' + strmid(decimal,2,2)
 print,'GEO LONG SC: ' + strtrim(locgeo[0],2)
 print,'GEO LAT SC: ' + strtrim(locgeo[1],2)
 print,'ALT SC (km off Earths surface: ' + strtrim(locgeo[2]-6370.,2)
-
-
-
-
-
-
-
