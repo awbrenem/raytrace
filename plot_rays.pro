@@ -84,10 +84,10 @@ if ~keyword_set(colors) then colors=replicate(254.,n_rays)
 
 if keyword_set(oplotX) and ~keyword_set(colorsX) then colorsX=replicate(254.,n_elements(oplotX[*,0]))
 
-if ~keyword_set(xrangeM) then xrangeM=[0.,4.]
-if ~keyword_set(zrangeM) then zrangeM=[-2.,2.]
+if ~keyword_set(xrangeM) then xrangeM=[0.,6.]
+if ~keyword_set(zrangeM) then zrangeM=[-3.,3.]
 if ~keyword_set(xrangeE) then xrangeE=xrangeM
-if ~keyword_set(yrangeE) then yrangeE=[-2.,2.]
+if ~keyword_set(yrangeE) then yrangeE=[-3.,3.]
 ;-----------------------
 
 earthx = COS((2*!PI/99.0)*FINDGEN(100))
@@ -158,27 +158,6 @@ endif
 
 
 ;_________________Meridional Plane__________________
-
-
-;plot,[0,0],/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
-
-;for qq=0,n_rays-1 do oplot,xcoord[*,qq],zcoord[*,qq],color=colors[qq]
-;oplot,earthx,earthy,color=60
-;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
-;oplot,L2.R/6370.,L2.colat*!dtor,/polar,color=120 & oplot,L2.R/6370.,-1*L2.colat*!dtor,/polar,color=120
-;oplot,L4.R/6370.,L4.colat*!dtor,/polar,color=120 & oplot,L4.R/6370.,-1*L4.colat*!dtor,/polar,color=120
-;oplot,L6.R/6370.,L6.colat*!dtor,/polar,color=120 & oplot,L6.R/6370.,-1*L6.colat*!dtor,/polar,color=120
-;oplot,L8.R/6370.,L8.colat*!dtor,/polar,color=120 & oplot,L8.R/6370.,-1*L8.colat*!dtor,/polar,color=120
-;if keyword_set(Lsc) then oplot,Lst.R/6370.,Lst.colat*!dtor,/polar,color=120 & oplot,Lst.R/6370.,-1*Lst.colat*!dtor,/polar,color=120
-;for i=0,n_elements(lats)-1 do oplot,[1,50],[lats[i]*!dtor,lats[i]*!dtor],/polar,linestyle=3,color=100
-;if keyword_set(oplotX) then begin
-;	for i=0,n_elements(oplotX[*,0])-1 do oplot,[oplotX[i,0]],[oplotX[i,2]],psym=7,color=colorsX[i]
-;endif
-;if keyword_set(kvecs) then begin
-;for bb=0,n_elements(kx2)-1 do oplot,[xc2[bb],xc2[bb]+kx2[bb]*sizexM],[zc2[bb],zc2[bb]+kz2[bb]*sizezM];,color=100
-;endif
-
-
 
 
 plot,[0,0],/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
