@@ -91,7 +91,8 @@ function read_write_trace_in,freq=freq,lat=lat,alt=alt,longit=longit,theta=theta
 	final_alt=final_alt,final_lat=final_lat,mmult=mmult,model=model,ppdc=ppdc,pplhw=pplhw,$
 	pplcp=pplcp,drde=drde,dlhw=dlhw,dlcp=dlcp,arl=arl,drl=drl,nHp=nHp,nHe=nHe,nO=nO,temp=temp
 
-openr,lun,'trace_in.txt', /get_lun
+
+openr,lun,'~/Desktop/code/Aaron/github.umn.edu/raytrace/trace_in.txt', /get_lun
 trace_in= strarr(24)
 tmp = ''
 

@@ -41,7 +41,12 @@ pro plot_resonance_energy,rayx,rayy,rayz,$
 		mlat,fq,dens,f_fce,indexref,theta_kb,wavelength,$
 		Lsc=Lsc,minkeV=minr,maxkeV=maxr,$
 		scposx=scx,scposy=scy,scposz=scz,ps=ps,harmonic=nres,type=type,$
-		pitch_angle=alpha,nonrelativistic=nonrelativistic
+		pitch_angle=alpha
+
+
+;file_compile,'/Users/aaronbreneman/Desktop/code/Aaron/github.umn.edu/plasma-physics-general/cycl_energies.pro',pro_name=pn,error=err,errmsg=emsg
+
+
 
 if ~KEYWORD_SET(nres) then nres = 1
 if ~KEYWORD_SET(type) then type = 'cyclotron'

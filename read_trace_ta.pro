@@ -1,32 +1,32 @@
 ;+
 ;*****************************************************************************************
 ;
-;  FUNCTION : read_trace_ta  
+;  FUNCTION : read_trace_ta
 ;  PURPOSE  : reads in output file from trace.for (trace_ta.txt by default) and returns
 ;			  structure of ray values
 ;
-;  CALLED BY:   
-;               
+;  CALLED BY:
+;
 ;
 ;  CALLS:
-;               
 ;
-;  REQUIRES:    
-;               
+;
+;  REQUIRES:
+;
 ;
 ;  INPUT:
-;               
 ;
-;  EXAMPLES:    
-;               
 ;
-;  KEYWORDS:    
-;               
+;  EXAMPLES:
+;
+;
+;  KEYWORDS:
+;
 ;
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
-;   NOTES:      
-;               
+;   NOTES:
+;
 ;
 ;   CREATED:  07/23/2010
 ;   CREATED BY:  Aaron W. Breneman
@@ -81,7 +81,8 @@
 
 function read_trace_ta,file=file
 
-if ~keyword_set(file) then file = 'trace_ta.txt'
+
+if ~keyword_set(file) then file = '~/Desktop/code/Aaron/github.umn.edu/raytrace/trace_ta.txt'
 
 
 notes = ['Reg -- indentification of the density region',$
@@ -140,13 +141,13 @@ openr,lun2,file,/get_lun
 array = replicate(0d,26)
 line = replicate(0d,26)
 junk = ''
-for i=0,1 do readf,lun1,junk 
+for i=0,1 do readf,lun1,junk
 for i=0,1 do readf,lun2,junk
 test = ''
 while test ne 'STOP' do begin & $
   readf,lun2,test & $
   if strmid(strtrim(test,2),0,4) eq 'STOP' then test = 'STOP' & $
-  if test ne 'STOP' then readf,lun1,line,format='(I2,5G10.3,F9.5,F8.0,2F9.4,G12.4,2f16.5,F16.2,3F6.1,F8.3,G10.3,7F6.1)' & $  
+  if test ne 'STOP' then readf,lun1,line,format='(I2,5G10.3,F9.5,F8.0,2F9.4,G12.4,2f16.5,F16.2,3F6.1,F8.3,G10.3,7F6.1)' & $
   if test ne 'STOP' then array = [[array],[line]] & $
 endwhile
 free_lun,lun1
@@ -168,12 +169,12 @@ zcoord = str.R*sin(str.lat*!dtor)
 
 ;Rectangular wave vectors
 ;first find projection onto radial (same as spherical coord with x=z,z=x,y=y)
-kx1 = cos(str.vek*!dtor)                  
+kx1 = cos(str.vek*!dtor)
 kz1 = sin(str.vek*!dtor)*cos(str.azk*!dtor)
 ky1 = sin(str.vek*!dtor)*sin(str.azk*!dtor)
 
 ;corrected values
-;kx1 = cos((str.vek-8.4)*!dtor)                  
+;kx1 = cos((str.vek-8.4)*!dtor)
 ;kz1 = sin((str.vek-8.4)*!dtor)*cos((str.azk-11.4)*!dtor)
 ;ky1 = sin((str.vek-8.4)*!dtor)*sin((str.azk-11.4)*!dtor)
 
@@ -198,20 +199,7 @@ str_element,str,'zcoord',zcoord,/ADD_REPLACE
 str_element,str,'kx',kx,/ADD_REPLACE
 str_element,str,'ky',ky,/ADD_REPLACE
 str_element,str,'kz',kz,/ADD_REPLACE
-str_element,str,'vgroup',vgroup,/ADD_REPLACE 
+str_element,str,'vgroup',vgroup,/ADD_REPLACE
 
 return,str
 end
-
-
-
-
-
-
-
-
-
-
-
-
-

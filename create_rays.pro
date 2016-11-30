@@ -1,34 +1,34 @@
 ;+
 ;*****************************************************************************************
 ;
-;  PROCEDURE : create_rays  
+;  PROCEDURE : create_rays
 ;  PURPOSE  : Creates rays by running trace.for for the inputted theta_kb values
 ;			  and turns these quantities into a .sav file
 ;
-;  CALLED BY:   
-;               
+;  CALLED BY:
+;
 ;
 ;  CALLS:
-;               
 ;
-;  REQUIRES:    
-;               
+;
+;  REQUIRES:
+;
 ;
 ;  INPUT:	    theta_kb_vals -> array of wave normal angles
 ;				freqs -> array of freqs (same size of theta_kb_vals)
 ;               title -> '_rays.sav' will be appended to this
 ;
-;  EXAMPLES:    
-;               
+;  EXAMPLES:
 ;
-;  KEYWORDS:    
-;               
+;
+;  KEYWORDS:
+;
 ;
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
 ;   NOTES:     Program is only capable of changing the theta_kb value in the trace_in.txt file
 ;			   To change other values use read_write_trace_in.pro
-;               
+;
 ;
 ;   CREATED:  MM/DD/YYYY
 ;   CREATED BY:  Aaron W. Breneman
@@ -41,7 +41,7 @@
 pro create_rays,theta_kb_vals,title=title,rootdir=rootdir,freqs=freqs
 
 
-npoints = 10000. ;max # of ray points 
+npoints = 10000. ;max # of ray points
 
 nthetas = n_elements(theta_kb_vals)
 
@@ -87,7 +87,7 @@ fq = freqs[qq]
 ;modify trace_in.txt
 if ~keyword_set(freqs) then ti_vals = read_write_trace_in(theta=theta_kb) else ti_vals = read_write_trace_in(theta=theta_kb,freq=fq)
 ;create the first ray
-spawn,'./trace'
+spawn,'~/Desktop/code/Aaron/github.umn.edu/raytrace/./trace'
 
 ;read in the ray values
 x = read_trace_ta()
@@ -123,5 +123,3 @@ if ~keyword_set(rootdir) then rootdir = ''
 save,filename=rootdir + title + '_rays.sav'
 
 end
-
-
