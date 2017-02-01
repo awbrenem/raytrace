@@ -45,8 +45,7 @@
 pro dens_bo_profile,freq,dens_sc=dens_sc,bo_sc=bo_sc,L_sc=L_sc,ps=ps
 
 if keyword_set(ps) then begin
-set_plot, 'ps'
-device,filename='~/Desktop/dens_bo_profile.ps'
+  popen,'~/Desktop/dens_bo_profile.ps'
 endif
 
 
@@ -61,7 +60,7 @@ test = ' '
 i=0
 j=0
 
-openr, 1, 'trace_ta.txt'
+openr, 1, '~/Desktop/code/Aaron/github.umn.edu/raytrace/trace_ta.txt'
 
 for i=0,1 do readf,1,junk
 
@@ -111,8 +110,9 @@ plot, r, b, /ylog, xrange=[2,6], yrange=[1,10000], xgridstyle=1, xticklen=1, $
 if keyword_set(bo_sc) and keyword_set(L_sc) then oplot,L_sc,bo_sc,psym=7
 
 if keyword_set(ps) then begin
-  device, /close
-  set_plot, 'x'
+  pclose
+;  device, /close
+;  set_plot, 'x'
 endif
 
 

@@ -39,7 +39,7 @@
 ;				lat  -> SM lat (deg)
 ;				final_lat -> final latitude (deg)
 ;				longit -> SM long (deg)
-;				alt -> initial altitude (km)
+;				alt -> initial altitude above surface (km)
 ;				final_alt -> final altitude (km)
 ;				freq -> frequency (Hz)
 ;				theta -> wave normal angle theta_kb (deg)
@@ -105,37 +105,68 @@ endfor
 close,lun
 free_lun,lun
 
+
+
 ;now entire file trace_in.txt has been read in, lets change the appropriate values
-if keyword_set(mmult) or n_elements(mmult) eq 1 then trace_in[2] = strmid(trace_in[2],0,51) + ' ' + strtrim(float(mmult),2)
-if keyword_set(model) or n_elements(model) eq 1 then trace_in[3] = strmid(trace_in[3],0,51) + ' ' + strtrim(long(model),2)
-if keyword_set(ppdc) or n_elements(ppdc) eq 1 then trace_in[4] = strmid(trace_in[4],0,51) + ' ' + strtrim(float(ppdc),2)
-if keyword_set(pplhw) or n_elements(pplhw) eq 1 then trace_in[5] = strmid(trace_in[5],0,51) + ' ' + strtrim(float(pplhw),2)
-if keyword_set(pplcp) or n_elements(pplcp) eq 1 then trace_in[6] = strmid(trace_in[6],0,51) + ' ' + strtrim(float(pplcp),2)
-if keyword_set(drde) or n_elements(drde) eq 1 then trace_in[7] = strmid(trace_in[7],0,51) + ' ' + strtrim(float(drde),2)
-if keyword_set(dlhw) or n_elements(dlhw) eq 1 then trace_in[8] = strmid(trace_in[8],0,51) + ' ' + strtrim(float(dlhw),2)
-if keyword_set(dlcp) or n_elements(dlcp) eq 1 then trace_in[9] = strmid(trace_in[9],0,51) + ' ' + strtrim(float(dlcp),2)
-if keyword_set(arl) or n_elements(arl) eq 1 then trace_in[10] = strmid(trace_in[10],0,51) + ' ' + strtrim(float(arl),2)
-if keyword_set(drl) or n_elements(drl) eq 1 then trace_in[11] = strmid(trace_in[11],0,51) + ' ' + strtrim(float(drl),2)
-if keyword_set(nHp) or n_elements(nHp) eq 1 then trace_in[12] = strmid(trace_in[12],0,51) + ' ' + strtrim(float(nHp),2)
-if keyword_set(nHe) or n_elements(nHe) eq 1 then trace_in[13] = strmid(trace_in[13],0,51) + ' ' + strtrim(float(nHe),2)
-if keyword_set(nO) or n_elements(nO) eq 1 then trace_in[14] = strmid(trace_in[14],0,51) + ' ' + strtrim(float(nO),2)
-if keyword_set(temp) or n_elements(temp) eq 1 then trace_in[15] = strmid(trace_in[15],0,51) + ' ' + strtrim(float(temp),2)
-if keyword_set(lat) or n_elements(lat) eq 1 then trace_in[16] = strmid(trace_in[16],0,51) + ' ' + strtrim(float(lat),2)
-if keyword_set(final_lat) or n_elements(final_lat) eq 1 then trace_in[17] = strmid(trace_in[17],0,51) + ' ' + strtrim(float(final_lat),2)
-if keyword_set(longit) or n_elements(longit) eq 1 then trace_in[18] = strmid(trace_in[18],0,51) + ' ' + strtrim(float(longit),2)
-if keyword_set(alt) or n_elements(alt) eq 1 then trace_in[19] = strmid(trace_in[19],0,51) + ' ' + strtrim(float(alt),2)
-if keyword_set(final_alt) or n_elements(final_alt) eq 1 then trace_in[20] = strmid(trace_in[20],0,51) + ' ' + strtrim(float(final_alt),2)
-if keyword_set(freq) or n_elements(freq) eq 1 then trace_in[21] = strmid(trace_in[21],0,51) + ' ' + strtrim(float(freq),2)
-if keyword_set(theta) or n_elements(theta) eq 1 then trace_in[22] = strmid(trace_in[22],0,51) + ' ' + strtrim(float(theta),2)
-if keyword_set(phi) or n_elements(phi) eq 1 then trace_in[23] = strmid(trace_in[23],0,51) + ' ' + strtrim(float(phi),2)
+if keyword_set(mmult) or n_elements(mmult) eq 1 then trace_in[2] =          'MAGNETIC-FIELD multiplier (dipole model):           '+strtrim(float(mmult),2)
+if keyword_set(model) or n_elements(model) eq 1 then trace_in[3] =          'DENS MODEL (0..DIF EQUIL 1..+PLASMAPAUSE 2...+DUCT) '+ strtrim(long(model),2)
+if keyword_set(ppdc) or n_elements(ppdc) eq 1 then trace_in[4] =            '  PLASMAPAUSE relative density change:              '+ strtrim(float(ppdc),2)
+if keyword_set(pplhw) or n_elements(pplhw) eq 1 then trace_in[5] =          '  PLASMAPAUSE  L-HALF WIDTH:                        '+ strtrim(float(pplhw),2)
+if keyword_set(pplcp) or n_elements(pplcp) eq 1 then trace_in[6] =          '  PLASMAPAUSE L-CENTRAL POSITION:                   '+ strtrim(float(pplcp),2)
+if keyword_set(drde) or n_elements(drde) eq 1 then trace_in[7] =            '  DUCT relative density enhancement:                '+ strtrim(float(drde),2)
+if keyword_set(dlhw) or n_elements(dlhw) eq 1 then trace_in[8] =            '  DUCT L-HALF WIDTH:                                '+ strtrim(float(dlhw),2)
+if keyword_set(dlcp) or n_elements(dlcp) eq 1 then trace_in[9] =            '  DUCT L-CENTRAL POSITION:                          '+ strtrim(float(dlcp),2)
+if keyword_set(arl) or n_elements(arl) eq 1 then trace_in[10] =             'ALTITUDE of REFERENCE LEVEL (km):                   '+ strtrim(float(arl),2)
+if keyword_set(drl) or n_elements(drl) eq 1 then trace_in[11] =             'DENSITY AT the REFERENCE LEVEL (cm^-3):             '+ strtrim(float(drl),2)
+if keyword_set(nHp) or n_elements(nHp) eq 1 then trace_in[12] =             ' nH+/ne at 1000km:                                  '+ strtrim(float(nHp),2)
+if keyword_set(nHe) or n_elements(nHe) eq 1 then trace_in[13] =             ' nHe+/ne at 1000km:                                 '+ strtrim(float(nHe),2)
+if keyword_set(nO) or n_elements(nO) eq 1 then trace_in[14] =               ' n0+/ne at 1000km:                                  '+ strtrim(float(nO),2)
+if keyword_set(temp) or n_elements(temp) eq 1 then trace_in[15] =           ' temperature at 1000km (K):                         '+ strtrim(float(temp),2)
+if keyword_set(lat) or n_elements(lat) eq 1 then trace_in[16] =             'Initial latitude (deg):                             '+ strtrim(float(lat),2)
+if keyword_set(final_lat) or n_elements(final_lat) eq 1 then trace_in[17] = 'Final latitude (deg):                               '+ strtrim(float(final_lat),2)
+if keyword_set(longit) or n_elements(longit) eq 1 then trace_in[18] =       'Initial longitude (deg):                            '+ strtrim(float(longit),2)
+if keyword_set(alt) or n_elements(alt) eq 1 then trace_in[19] =             'Initial altitude (km):                              '+ strtrim(float(alt),2)
+if keyword_set(final_alt) or n_elements(final_alt) eq 1 then trace_in[20] = 'Final altitude (km):                                '+ strtrim(float(final_alt),2)
+if keyword_set(freq) or n_elements(freq) eq 1 then trace_in[21] =           'Frequency (Hz):                                     '+ strtrim(float(freq),2)
+if keyword_set(theta) or n_elements(theta) eq 1 then trace_in[22] =         'INITIAL VALUE OF THETA (deg):                       '+ strtrim(float(theta),2)
+if keyword_set(phi) or n_elements(phi) eq 1 then trace_in[23] =             'INITIAL VALUE OF Phi (deg):                         '+ strtrim(float(phi),2)
 
 
-OPENW,lun2,'trace_intemp.txt',/GET_LUN
+;;now entire file trace_in.txt has been read in, lets change the appropriate values
+;if keyword_set(mmult) or n_elements(mmult) eq 1 then trace_in[2] = strmid(trace_in[2],0,51) + ' ' + strtrim(float(mmult),2)
+;if keyword_set(model) or n_elements(model) eq 1 then trace_in[3] = strmid(trace_in[3],0,51) + ' ' + strtrim(long(model),2)
+;if keyword_set(ppdc) or n_elements(ppdc) eq 1 then trace_in[4] = strmid(trace_in[4],0,51) + ' ' + strtrim(float(ppdc),2)
+;if keyword_set(pplhw) or n_elements(pplhw) eq 1 then trace_in[5] = strmid(trace_in[5],0,51) + ' ' + strtrim(float(pplhw),2)
+;if keyword_set(pplcp) or n_elements(pplcp) eq 1 then trace_in[6] = strmid(trace_in[6],0,51) + ' ' + strtrim(float(pplcp),2)
+;if keyword_set(drde) or n_elements(drde) eq 1 then trace_in[7] = strmid(trace_in[7],0,51) + ' ' + strtrim(float(drde),2)
+;if keyword_set(dlhw) or n_elements(dlhw) eq 1 then trace_in[8] = strmid(trace_in[8],0,51) + ' ' + strtrim(float(dlhw),2)
+;if keyword_set(dlcp) or n_elements(dlcp) eq 1 then trace_in[9] = strmid(trace_in[9],0,51) + ' ' + strtrim(float(dlcp),2)
+;if keyword_set(arl) or n_elements(arl) eq 1 then trace_in[10] = strmid(trace_in[10],0,51) + ' ' + strtrim(float(arl),2)
+;if keyword_set(drl) or n_elements(drl) eq 1 then trace_in[11] = strmid(trace_in[11],0,51) + ' ' + strtrim(float(drl),2)
+;if keyword_set(nHp) or n_elements(nHp) eq 1 then trace_in[12] = strmid(trace_in[12],0,51) + ' ' + strtrim(float(nHp),2)
+;if keyword_set(nHe) or n_elements(nHe) eq 1 then trace_in[13] = strmid(trace_in[13],0,51) + ' ' + strtrim(float(nHe),2)
+;if keyword_set(nO) or n_elements(nO) eq 1 then trace_in[14] = strmid(trace_in[14],0,51) + ' ' + strtrim(float(nO),2)
+;if keyword_set(temp) or n_elements(temp) eq 1 then trace_in[15] = strmid(trace_in[15],0,51) + ' ' + strtrim(float(temp),2)
+;if keyword_set(lat) or n_elements(lat) eq 1 then trace_in[16] = strmid(trace_in[16],0,51) + ' ' + strtrim(float(lat),2)
+;if keyword_set(final_lat) or n_elements(final_lat) eq 1 then trace_in[17] = strmid(trace_in[17],0,51) + ' ' + strtrim(float(final_lat),2)
+;if keyword_set(longit) or n_elements(longit) eq 1 then trace_in[18] = strmid(trace_in[18],0,51) + ' ' + strtrim(float(longit),2)
+;if keyword_set(alt) or n_elements(alt) eq 1 then trace_in[19] = strmid(trace_in[19],0,51) + ' ' + strtrim(float(alt),2)
+;if keyword_set(final_alt) or n_elements(final_alt) eq 1 then trace_in[20] = strmid(trace_in[20],0,51) + ' ' + strtrim(float(final_alt),2)
+;if keyword_set(freq) or n_elements(freq) eq 1 then trace_in[21] = strmid(trace_in[21],0,51) + ' ' + strtrim(float(freq),2)
+;if keyword_set(theta) or n_elements(theta) eq 1 then trace_in[22] = strmid(trace_in[22],0,51) + ' ' + strtrim(float(theta),2)
+;if keyword_set(phi) or n_elements(phi) eq 1 then trace_in[23] = strmid(trace_in[23],0,51) + ' ' + strtrim(float(phi),2)
+
+;stop
+
+OPENW,lun2,'~/Desktop/code/Aaron/github.umn.edu/raytrace/trace_intemp.txt',/GET_LUN
+
+cd,'~/Desktop/code/Aaron/github.umn.edu/raytrace',current=currdir
 spawn,'chmod 777 trace_intemp.txt'
 PRINTF,lun2,trace_in
 CLOSE,lun2
 FREE_LUN,lun2
 spawn,'mv trace_intemp.txt trace_in.txt'
+cd,currdir
 
 ;dummy struct
 struct = {mmult:!values.f_nan,model:!values.f_nan,ppdc:!values.f_nan,pplhw:!values.f_nan,pplcp:!values.f_nan,drde:!values.f_nan,$

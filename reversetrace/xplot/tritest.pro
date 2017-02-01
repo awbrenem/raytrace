@@ -33,9 +33,9 @@ stop
       sideC=sqrt((xc(2)-xc(1))^2 + (zc(2)-zc(1))^2)
 
       test='no'
-;0.0157 is equivalent to 100 km resolution. 
+;0.0157 is equivalent to 100 km resolution.
       if(sideA GT 0.04) then test='yes'
-      if(sideB GT 0.04) then test='yes'  ;gets rid of the long triangles that mess up the 
+      if(sideB GT 0.04) then test='yes'  ;gets rid of the long triangles that mess up the
       if(sideC GT 0.04) then test='yes'  ;triangulation
       if(test EQ 'yes') then tr(*,u) = 0
       u=u+1
@@ -49,7 +49,7 @@ stop
 print,'LONG TRIANGLES REMOVED'
 stop
 
-	  nlines = 400 - 1	
+	  nlines = 400 - 1
 	  gridspacing = fltarr(2)
 	  gridspacing = [1./nlines,1./nlines]
 	  limits = [0,0,1,1]
@@ -112,9 +112,9 @@ stop
       sideC=sqrt((xc(2)-xc(1))^2 + (zc(2)-zc(1))^2)
 
       test='no'
-;0.0157 is equivalent to 100 km resolution. 
+;0.0157 is equivalent to 100 km resolution.
       if(sideA GT 0.075) then test='yes'
-      if(sideB GT 0.075) then test='yes'  ;gets rid of the long triangles that mess up the 
+      if(sideB GT 0.075) then test='yes'  ;gets rid of the long triangles that mess up the
       if(sideC GT 0.075) then test='yes'  ;triangulation
       if(test EQ 'yes') then tr2(*,u) = 0
       u=u+1

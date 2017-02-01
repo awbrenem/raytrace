@@ -51,7 +51,7 @@ ti = read_write_trace_in(freq=freqv,$
 
 
 	freqs = replicate(freqv,n_elements(thetavals))
-	create_rays,thetavals,freqs=freqs,title='uB3'
+	create_rays_thetakb_spread,thetavals,freqs=freqs,title='uB3'
 
 	dens_bo_profile,freqv,dens_sc=8,bo_sc=146,L_sc=RBSPa_leq;,/ps
 ;	x = read_trace_ta()
@@ -186,7 +186,7 @@ thetavals = [-20.,-40.,-60.,-65]
 ;thetavals = 180+[-60,-50,-40,-30,-20, -10,0,10,20,30,40,50,60]
 ;thetavals = 0.
 freqs = replicate(freqv,n_elements(thetavals))
-create_rays,thetavals,freqs=freqs,title='uB3'
+create_rays_thetakb_spread,thetavals,freqs=freqs,title='uB3'
 
 ;dens_bo_profile,freqv,dens_sc=8,bo_sc=146,L_sc=RBSPa_leq;,/ps
 ;x = read_trace_ta()
@@ -201,8 +201,8 @@ pa = replicate(5.,n_elements(thetavals))
 evals = cycl_energies(freqs,thk,pa,fce,kvec,1)
 
 
-eplot = evals.e_cycl_anom
-vz = evals.vz_cycl_anom
+eplot = evals.e_cycl_costream
+vz = evals.vz_cycl_costream
 
 
 	plot_rays,xcoord,ycoord,zcoord,ray_vals=eplot,$
@@ -250,7 +250,7 @@ Lsc=[RBSPa_leq1,RBSPa_leq2,FB_leq1,FB_leq2],minval=200,maxval=800;,/psonly
 
 
 ;-------------------------------------------------------------------
-;THIRD VERSION IS FOR ANOMALOUS CYCLOTRON (n>1) RESONANCE AT EQUATOR
+;THIRD VERSION IS FOR COSTREAMING CYCLOTRON (n>1) RESONANCE AT EQUATOR
 ;-------------------------------------------------------------------
 
 ;200 keV ray:  f=1700 Hz, theta_kb=-20
@@ -290,7 +290,7 @@ thetavals = 60.
 ;thetavals = 180+[-60,-50,-40,-30,-20, -10,0,10,20,30,40,50,60]
 ;thetavals = 0.
 freqs = replicate(freqv,n_elements(thetavals))
-create_rays,thetavals,freqs=freqs,title='uB3'
+create_rays_thetakb_spread,thetavals,freqs=freqs,title='uB3'
 
 ;dens_bo_profile,freqv,dens_sc=8,bo_sc=146,L_sc=RBSPa_leq;,/ps
 x = read_trace_ta()
@@ -302,8 +302,8 @@ kvec = 2*!pi/x.wl   ;1/km
 evals = cycl_energies(freqv,x.thk,5.,fce,kvec,4)
 
 
-eplot = evals.e_cycl_anom
-vz = evals.vz_cycl_anom
+eplot = evals.e_cycl_costream
+vz = evals.vz_cycl_costream
 
 
 ;	plot_rays,x.xcoord,x.ycoord,x.zcoord,ray_vals=eplot,$

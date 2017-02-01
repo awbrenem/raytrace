@@ -1,6 +1,6 @@
 TRACE (ray tracing) input values
 ___________________________________________________:______________
-MAGNETIC-FIELD multiplier (dipole model):           0.800000
+MAGNETIC-FIELD multiplier (dipole model):           0.750000
 DENS MODEL (0..DIF EQUIL 1..+PLASMAPAUSE 2...+DUCT) 0
   PLASMAPAUSE relative density change:              0.50000
   PLASMAPAUSE  L-HALF WIDTH:                        0.500000
@@ -14,11 +14,11 @@ DENSITY AT the REFERENCE LEVEL (cm^-3):             10000.0
  nHe+/ne at 1000km:                                 0.00000
  n0+/ne at 1000km:                                  0.999000
  temperature at 1000km (K):                         829.000
-Initial latitude (deg):                             -0.930000
-Final latitude (deg):                               -50.0000
+Initial latitude (deg):                             0.00000
+Final latitude (deg):                               42.0000
 Initial longitude (deg):                            0.00000
-Initial altitude (km):                              30384.9
+Initial altitude (km):                              31850.0
 Final altitude (km):                                4000.00
-Frequency (Hz):                                     1700.00
-INITIAL VALUE OF THETA (deg):                       120.000
+Frequency (Hz):                                     1800.00
+INITIAL VALUE OF THETA (deg):                       -40.0000
 INITIAL VALUE OF Phi (deg):                         0.00000

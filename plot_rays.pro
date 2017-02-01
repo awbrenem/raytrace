@@ -2,7 +2,8 @@
 ;*****************************************************************************************
 ;
 ;  PROCEDURE : plot_rays
-;  PURPOSE  :  plots ray output from trace.f
+;  PURPOSE  :  plots ray output from trace.f.
+;							 Tested fairly extensively and seems to be working
 ;
 ;  CALLED BY:
 ;
@@ -36,6 +37,7 @@
 ;				Lsc    -> Overplots L-shell of sc
 ;				psonly -> only plot ps (to ~/Desktop/rayplot.ps)
 ;				k_spacing -> spacing of k-vector arrows (km). Defaults to 300 km
+;				minv, maxv -> min and max color values to plot
 ;
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
@@ -61,8 +63,6 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 	if ~KEYWORD_SET(minv) then minv=10.
 	if ~KEYWORD_SET(maxv) then maxv=500.
 	if ~KEYWORD_SET(alpha) then alpha = 0.
-
-
 	if ~keyword_set(k_spacing) then k_spacing = 300.
 	if ~keyword_set(psonly) then begin
 
@@ -121,6 +121,7 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 
 	L2 = dipole(2.)
 	L4 = dipole(4.)
+	L5 = dipole(5.)
 	L6 = dipole(6.)
 	L8 = dipole(8.)
 
@@ -177,16 +178,39 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 
 
 
-	;_________________Meridional Plane__________________
 
+
+	;_________________Meridional Plane__________________
 
 
 	if KEYWORD_SET(ray_vals) then begin
 
-		if minv lt 1 then minv = 1. ;can't have values < 1 due to log scale
+;		if minv lt 1 then minv = 1. ;can't have values < 1 due to log scale
 
 
 		cgPlot, rayx, rayz, /NoData,xrange=[0,6],yrange=[-3,3],xstyle=1,ystyle=1,position=aspect(1)
+
+		oplot,earthx,earthy,color=60
+		;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
+
+		oplot,replicate(1.078,360.)*cos(indgen(360.)*!dtor),replicate(1.078,360.)*sin(indgen(360.)*!dtor),color=80
+		oplot,L2.R/6370.*cos(L2.lat*!dtor),L2.R/6370.*sin(L2.lat*!dtor),color=120
+		oplot,L2.R/6370.*cos(L2.lat*!dtor),-1*L2.R/6370.*sin(L2.lat*!dtor),color=120
+
+		oplot,L4.R/6370.*cos(L4.lat*!dtor),L4.R/6370.*sin(L4.lat*!dtor),color=120
+		oplot,L4.R/6370.*cos(L4.lat*!dtor),-1*L4.R/6370.*sin(L4.lat*!dtor),color=120
+
+		oplot,L5.R/6370.*cos(L5.lat*!dtor),L5.R/6370.*sin(L5.lat*!dtor),color=120
+		oplot,L5.R/6370.*cos(L5.lat*!dtor),-1*L5.R/6370.*sin(L5.lat*!dtor),color=120
+
+		oplot,L6.R/6370.*cos(L6.lat*!dtor),L6.R/6370.*sin(L6.lat*!dtor),color=120
+		oplot,L6.R/6370.*cos(L6.lat*!dtor),-1*L6.R/6370.*sin(L6.lat*!dtor),color=120
+
+		oplot,L8.R/6370.*cos(L8.lat*!dtor),L8.R/6370.*sin(L8.lat*!dtor),color=120
+		oplot,L8.R/6370.*cos(L8.lat*!dtor),-1*L8.R/6370.*sin(L8.lat*!dtor),color=120
+
+
+
 		for qq=0,n_rays-1 do begin
 
 			;get rid of NaN values
@@ -198,27 +222,20 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 			endif
 
 			s = n_elements(rayxt)
-			logvals = alog10(ray_valst)
-
-;DOESN'T WORK....
-;			colors = long(bytscl(logvals,min=alog10(minv),max=alog10(maxv)))
 			colors = long(bytscl(ray_valst,min=minv,max=maxv))
+			goober = where(colors eq 0)
+			if goober[0] ne -1 then colors[goober] = 1
 
-;			for j=0,s-2 do cgPlotS, [rayx[j,qq], rayx[j+1,qq]], [rayz[j,qq], rayz[j+1,qq]], Color=StrTrim(colors[j],2), Thick=2
-;for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=StrTrim(colors[j],2), Thick=2
-
-for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=colors[j], Thick=2
+			for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=colors[j], Thick=2
 		endfor
 
 		;Plot colorbar
-
 		loadct,39  ;need the first element to be black
 		nticks = 7.
 		tn = (indgen(nticks)/(nticks-1))*(maxv-minv) + minv
 		tn = strtrim(string(tn,format='(f8.2)'),2)
 		colorbar,POSITION=[0.15, 0.85, 0.95, 0.90],$
-		divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv]
-
+		divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
 
 	endif else begin
 		;plot the rays without any color fill value
@@ -233,26 +250,7 @@ for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=co
 
 			oplot,xcoordt,zcoordt,color=colors[qq]
 		endfor
-
 	endelse
-
-
-
-	oplot,earthx,earthy,color=60
-	;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
-
-	oplot,replicate(1.078,360.)*cos(indgen(360.)*!dtor),replicate(1.078,360.)*sin(indgen(360.)*!dtor),color=80
-	oplot,L2.R/6370.*cos(L2.lat*!dtor),L2.R/6370.*sin(L2.lat*!dtor),color=120
-	oplot,L2.R/6370.*cos(L2.lat*!dtor),-1*L2.R/6370.*sin(L2.lat*!dtor),color=120
-
-	oplot,L4.R/6370.*cos(L4.lat*!dtor),L4.R/6370.*sin(L4.lat*!dtor),color=120
-	oplot,L4.R/6370.*cos(L4.lat*!dtor),-1*L4.R/6370.*sin(L4.lat*!dtor),color=120
-
-	oplot,L6.R/6370.*cos(L6.lat*!dtor),L6.R/6370.*sin(L6.lat*!dtor),color=120
-	oplot,L6.R/6370.*cos(L6.lat*!dtor),-1*L6.R/6370.*sin(L6.lat*!dtor),color=120
-
-	oplot,L8.R/6370.*cos(L8.lat*!dtor),L8.R/6370.*sin(L8.lat*!dtor),color=120
-	oplot,L8.R/6370.*cos(L8.lat*!dtor),-1*L8.R/6370.*sin(L8.lat*!dtor),color=120
 
 
 
@@ -260,9 +258,6 @@ for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=co
 	if keyword_set(Lsc) then oplot,Lst.R/6370.*cos(Lst.lat*!dtor),Lst.R/6370.*sin(Lst.lat*!dtor),color=160 & oplot,Lst.R/6370.*cos(Lst.lat*!dtor),-1*Lst.R/6370.*sin(Lst.lat*!dtor),color=160
 
 	for i=0,n_elements(lats)-1 do oplot,[1,50]*cos([lats[i]*!dtor,lats[i]*!dtor]),[1,50]*sin([lats[i]*!dtor,lats[i]*!dtor]),linestyle=3,color=100
-
-	;for i=0,n_elements(lats)-1 do oplot,[1,50],[lats[i]*!dtor,lats[i]*!dtor],/polar,linestyle=3,color=100
-
 
 	if keyword_set(oplotX) then begin
 		for i=0,n_elements(oplotX[*,0])-1 do oplot,[oplotX[i,0]],[oplotX[i,2]],psym=7,color=colorsX[i]
@@ -303,12 +298,12 @@ for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=co
 	endif
 
 
-  if keyword_set(psonly) then pclose
+	if keyword_set(psonly) then pclose
 
-;	if keyword_set(psonly) then begin
-;		device,/close
-;		set_plot,'x'
-;	endif
+	;	if keyword_set(psonly) then begin
+	;		device,/close
+	;		set_plot,'x'
+	;	endif
 
 
 
