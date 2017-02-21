@@ -6,6 +6,8 @@
 ;gridvalues --> [n,m] array where xgrid is size n and zgrid is size m. Represents
 ;						values of area covered by rays after a series of rays are inputted into the
 ;						triangulation routine "triangulate_rays.pro"
+;gridpts --> return x,z array indices of the extracted slice. This can be used to reference
+;						other arrays returned by triangulate_rays.pro (see crib_raytrace_scenario1.pro)
 
 ;See example crib_raytrace_scenario1.pro
 
@@ -32,7 +34,6 @@ function extract_lshell_mlat_slice,lval,mlat,xgrid,zgrid,gridvalues,gridpts=grid
 			gridvals_final[i] = gridvalues[gridx[i],gridz[i]]
 
 		endfor
-
 	endif
 
 
@@ -54,7 +55,6 @@ function extract_lshell_mlat_slice,lval,mlat,xgrid,zgrid,gridvalues,gridpts=grid
 			gridz[i] = goo[0]
 			gridvals_final[i] = gridvalues[gridx[i],gridz[i]]
 		endfor
-
 	endif
 
 	gridpts = [[gridx],[gridz]]
