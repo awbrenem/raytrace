@@ -56,11 +56,11 @@
 
 pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,xrangeE=xrangeE,$
 	yrangeE=yrangeE,ray_struct=ray_struct,colors=colors,colorsX=colorsX,oplotX=oplotX,kvecs=kvecs,Lsc=Lsc,$
-	psonly=psonly,k_spacing=k_spacing,minval=minv,maxval=maxv
+	psonly=psonly,k_spacing=k_spacing,minval=minv,maxval=maxv,raycolor=raycolor
 
 
 	;rbsp_efw_init
-
+	if ~KEYWORD_SET(raycolor) then raycolor = 254
 	if ~KEYWORD_SET(minv) then minv=10.
 	if ~KEYWORD_SET(maxv) then maxv=500.
 	if ~KEYWORD_SET(alpha) then alpha = 0.
@@ -100,9 +100,9 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zr
 	endelse
 
 
-	if ~keyword_set(colors) then colors=replicate(254.,n_rays)
+	if ~keyword_set(colors) then colors=replicate(raycolor,n_rays)
 
-	if keyword_set(oplotX) and ~keyword_set(colorsX) then colorsX=replicate(254.,n_elements(oplotX[*,0]))
+	if keyword_set(oplotX) and ~keyword_set(colorsX) then colorsX=replicate(raycolor,n_elements(oplotX[*,0]))
 
 	if ~keyword_set(xrangeM) then xrangeM=[0.,6.]
 	if ~keyword_set(zrangeM) then zrangeM=[-3.,3.]
