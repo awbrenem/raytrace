@@ -1,0 +1,30 @@
+How to compile the FORTRAN code trace.for
+
+This needs to be linked during the compile to the TSY pack, which I've renamed
+geopack_fortran.f
+
+gfortran -std=legacy trace.f geopack_fortran.f
+
+
+HOWEVER, THIS WON'T WORK UNTIL XCODE IS DELETED. 
+To do this, first back up, and then delete /opt/local
+This will allow the compiling to work. However, Xwindows won't work. So, compile the code, 
+then unzip the backed up "local"
+
+
+Can find the original package here: http://geo.phys.spbu.ru/~tsyganenko/modeling.html
+Note that Ondrej's code calls "recalc". I had to change this to "recalc_08" as well as
+three new dummy vars. Here's the change
+
+Old:   call RECALC (IYEAR,IDOY,0,0,0)
+New:   call RECALC_08 (IYEAR,IDOY,0,0,0,0,0,0)
+
+
+
+
+
+
+
+
+
+
