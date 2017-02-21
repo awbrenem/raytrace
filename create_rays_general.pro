@@ -40,13 +40,12 @@
 ;freq used to determine size of arrays. Must always input a freq value for every freq.
 
 pro create_rays_general,freqv,$
-    theta=thetav,$
-    alt=altv,$
-    lat=latv,$
-    title=title,rootdir=rootdir
+  theta=thetav,$
+  alt=altv,$
+  lat=latv,$
+  title=title,rootdir=rootdir
 
   nrays = n_elements(freqv)
-
   npoints = 10000. ;max # of ray points
 
 
@@ -81,37 +80,37 @@ pro create_rays_general,freqv,$
 
 
 
-    ;These ray values are constant along the entire raypath and represent
-    ;the initial value for that ray. e.g. the radial value where the ray was started.
-    ;These are used after the triangulation routine for, for ex., selecting a particular
-    ;L-slice (say at mlats from 20-40 deg) and knowing where these rays originated from.
+  ;These ray values are constant along the entire raypath and represent
+  ;the initial value for that ray. e.g. the radial value where the ray was started.
+  ;These are used after the triangulation routine for, for ex., selecting a particular
+  ;L-slice (say at mlats from 20-40 deg) and knowing where these rays originated from.
 
 
-      wavelength0 = replicate(!values.f_nan,npoints,nrays)
-      f_fce0 = replicate(!values.f_nan,npoints,nrays)
-      f_fch0 = replicate(!values.f_nan,npoints,nrays)
-      dens0 = replicate(!values.f_nan,npoints,nrays)
-      flhr0 = replicate(!values.f_nan,npoints,nrays)
-      indexref0 = replicate(!values.f_nan,npoints,nrays)
-      gendrin0 = replicate(!values.f_nan,npoints,nrays)
-      rescone0 = replicate(!values.f_nan,npoints,nrays)
-      thk0 = replicate(!values.f_nan,npoints,nrays)
-      thg0 = replicate(!values.f_nan,npoints,nrays)
-      phk0 = replicate(!values.f_nan,npoints,nrays)
-      azk0 = replicate(!values.f_nan,npoints,nrays)
-      vek0 = replicate(!values.f_nan,npoints,nrays)
+  wavelength0 = replicate(!values.f_nan,npoints,nrays)
+  f_fce0 = replicate(!values.f_nan,npoints,nrays)
+  f_fch0 = replicate(!values.f_nan,npoints,nrays)
+  dens0 = replicate(!values.f_nan,npoints,nrays)
+  flhr0 = replicate(!values.f_nan,npoints,nrays)
+  indexref0 = replicate(!values.f_nan,npoints,nrays)
+  gendrin0 = replicate(!values.f_nan,npoints,nrays)
+  rescone0 = replicate(!values.f_nan,npoints,nrays)
+  thk0 = replicate(!values.f_nan,npoints,nrays)
+  thg0 = replicate(!values.f_nan,npoints,nrays)
+  phk0 = replicate(!values.f_nan,npoints,nrays)
+  azk0 = replicate(!values.f_nan,npoints,nrays)
+  vek0 = replicate(!values.f_nan,npoints,nrays)
 
-      radius0 = replicate(!values.f_nan,npoints,nrays)
-      lat0 = replicate(!values.f_nan,npoints,nrays)
-      longit0 = replicate(!values.f_nan,npoints,nrays)
-      lval0 = replicate(!values.f_nan,npoints,nrays)
+  radius0 = replicate(!values.f_nan,npoints,nrays)
+  lat0 = replicate(!values.f_nan,npoints,nrays)
+  longit0 = replicate(!values.f_nan,npoints,nrays)
+  lval0 = replicate(!values.f_nan,npoints,nrays)
 
-      xcoord0 = replicate(!values.f_nan,npoints,nrays)
-      ycoord0 = replicate(!values.f_nan,npoints,nrays)
-      zcoord0 = replicate(!values.f_nan,npoints,nrays)
-      kx0 = replicate(!values.f_nan,npoints,nrays)
-      ky0 = replicate(!values.f_nan,npoints,nrays)
-      kz0 = replicate(!values.f_nan,npoints,nrays)
+  xcoord0 = replicate(!values.f_nan,npoints,nrays)
+  ycoord0 = replicate(!values.f_nan,npoints,nrays)
+  zcoord0 = replicate(!values.f_nan,npoints,nrays)
+  kx0 = replicate(!values.f_nan,npoints,nrays)
+  ky0 = replicate(!values.f_nan,npoints,nrays)
+  kz0 = replicate(!values.f_nan,npoints,nrays)
 
 
 
@@ -119,26 +118,19 @@ pro create_rays_general,freqv,$
   ;loop through all the theta values
   for qq=0,nrays-1 do begin
 
-
     ti = read_write_trace_in(freq=freqv[qq],$
-;    mmult = .80,$
+    ;    mmult = .80,$
     lat=latv[qq],$
     theta=thetav[qq],$
-;    phi=0.,$
+    ;    phi=0.,$
     alt=altv[qq])
-;    final_alt=4000.,$
-;    model=0,$
-;    final_lat=42,$
-;    pplcp=3.,$
-;    pplhw=0.5,$
-;    drl=10000.)
+    ;    final_alt=4000.,$
+    ;    model=0,$
+    ;    final_lat=42,$
+    ;    pplcp=3.,$
+    ;    pplhw=0.5,$
+    ;    drl=10000.)
 
-
-
-
-    ;modify trace_in.txt
-;    if ~keyword_set(freqs) then ti_vals = read_write_trace_in(theta=theta_kb) else $
-;    ti_vals = read_write_trace_in(theta=theta_kb,freq=fq)
 
 
     ;Change directory to raytrace so I can run the trace script
@@ -179,9 +171,11 @@ pro create_rays_general,freqv,$
     f_fch[0:npts-1,qq] = x.f_fch[0:npts-1]
     gendrin[0:npts-1,qq] = x.thg[0:npts-1]
     rescone[0:npts-1,qq] = x.res[0:npts-1]
+    dens[0:npts-1,qq] = x.dens[0:npts-1]
 
 
 
+    ;populate the initial value arrays
     wavelength0[0:npts-1,qq] = wavelength[0,qq]
     f_fce0[0:npts-1,qq] =  f_fce[0,qq]
     f_fch0[0:npts-1,qq] =  f_fch[0,qq]
