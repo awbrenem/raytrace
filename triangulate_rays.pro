@@ -16,6 +16,11 @@
 ;           yrange --> plot y range. Defaults to y "limits"
 ;           minv --> min value of "vals" to plot.
 ;           maxv --> max value of "vals" to plot.
+;           psonly --> plot ps of file (to Desktop)
+;           zbuffer --> small filesize png plot (to Desktop)
+;           maxtrianglesize -> Triangles longer than this (RE) will be removed
+;             defaults to 0.1
+;           noplot --> don't do the contour plot, which takes time
 ;
 ; REQUIRES:
 ; HISTORY: Written by AWB 2016-12-22
@@ -27,20 +32,30 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   nlines=nlines,limits=limits,minv=minv,maxv=maxv,$
   nlvls=nlvls,xrange=xrange,yrange=yrange,lsc=lsc,$
   xgrid=xg,ygrid=yg,result=result,$
-  mlats=mlats,lvals=lvals,rads=rads,ilats=ilats
+  mlats=mlats,lvals=lvals,rads=rads,ilats=ilats,$
+  psonly=psonly,zbuffer=zbuffer,$
+  maxtrianglesize=mts,noplot=np
 
+
+  if KEYWORD_SET(zbuffer) then begin
+    thisDevice = !D.Name
+    Set_Plot, 'Z'
+    Device, Set_Resolution=[500,500], Decomposed=0;, Set_Pixel_Depth=24
+  endif
 
 
   !p.multi = [0,0,1]
+
+  if KEYWORD_SET(psonly) then popen,'~/Desktop/triangulaterays_output.ps'
+
+  if ~KEYWORD_SET(mts) then mts = 0.1
 
   if ~keyword_set(nlines) then nlines = 400 - 1
   gridspacing = fltarr(2)
   gridspacing = [1./nlines,1./nlines]
   if ~KEYWORD_SET(limits) then limits = [0,-2,6,0]
-
   if ~keyword_set(minv) then minv = min(vals)
   if ~keyword_set(maxv) then maxv = max(vals)
-
   if ~KEYWORD_SET(nlvls) then nlvls=10
 
   ;turn into 1D arrays
@@ -85,10 +100,10 @@ pro triangulate_rays,xcoord,ycoord,vals,$
     sideC=sqrt((xc[2]-xc[1])^2 + (yc[2]-yc[1])^2); & $
     fail=0
 
-    if(sideA GT 0.1) then fail=1 ;& $
-    if(sideB GT 0.1) then fail=1 ;& $  ;gets rid of the long triangles that mess up the
-    if(sideC GT 0.1) then fail=1 ;& $  ;triangulation
-    if(fail) then tr[*,u] = 0 ;& $
+    if(sideA GT mts) then fail=1 ;& $
+    if(sideB GT mts) then fail=1 ;& $  ;gets rid of the long triangles that mess up the
+    if(sideC GT mts) then fail=1 ;& $  ;triangulation
+    if fail then tr[*,u] = 0 ;& $
 
     u=u+1
   endwhile
@@ -103,6 +118,8 @@ pro triangulate_rays,xcoord,ycoord,vals,$
 
 
   result = trigrid(xv,yv,valsF,tr,xgrid=xg,ygrid=yg,gridspacing,limits)
+
+  if ~KEYWORD_SET(np) then begin
 
   contour,result,xg,yg,nlevels=nlvls,min_value=minv,max_value=maxv,$
   /cell_fill,xrange=xrange,yrange=yrange,xstyle=1,ystyle=1,$
@@ -179,6 +196,9 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   ;    	endif
 
 
+endif ;plot condition
+
+
   ;Calculate position values for each point crossed by a ray path
   mlats = fltarr(n_elements(xg),n_elements(yg))
   lvals = fltarr(n_elements(xg),n_elements(yg))
@@ -213,6 +233,11 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   rads *= binvar
   ilats *= binvar
 
+  if KEYWORD_SET(psonly) then pclose
 
+  if KEYWORD_SET(zbuffer) then begin
+    void = cgSnapshot(File='~/Desktop/triangulate_rays_plot', /PNG, /NoDialog)
+    Set_Plot, thisDevice
+  endif
 
 end
