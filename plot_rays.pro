@@ -24,6 +24,7 @@
 ;  KEYWORDS:    rayx -> (*,n_rays) - Meridional x values (SM coord) for ray (RE)
 ;				rayy -> Equatorial y
 ;				rayz -> Meridional z
+;				longit -> ray longitude. Needed to extract the Meridional plane (xcoord/cos(longit))
 ;				ray_struct -> the structure returned from read_trace_ta()
 ;				xrangeM -> Meridional x range in RE
 ;				zrangeM -> Meridional z range in RE
@@ -53,7 +54,7 @@
 ;*****************************************************************************************
 ;-
 
-pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,xrangeE=xrangeE,$
+pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,xrangeE=xrangeE,$
 	yrangeE=yrangeE,ray_struct=ray_struct,colors=colors,colorsX=colorsX,oplotX=oplotX,kvecs=kvecs,Lsc=Lsc,$
 	psonly=psonly,k_spacing=k_spacing,minval=minv,maxval=maxv
 
@@ -97,7 +98,6 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 		zcoord = rayz
 		n_rays = n_elements(rayx[0,*])
 	endelse
-
 
 
 	if ~keyword_set(colors) then colors=replicate(254.,n_rays)
@@ -188,7 +188,7 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 ;		if minv lt 1 then minv = 1. ;can't have values < 1 due to log scale
 
 
-		cgPlot, rayx, rayz, /NoData,xrange=[0,6],yrange=[-3,3],xstyle=1,ystyle=1,position=aspect(1)
+		cgPlot, rayx, rayz, /NoData,xrange=xrangeM,yrange=zrangeM,xstyle=1,ystyle=1,position=aspect(1)
 
 		oplot,earthx,earthy,color=60
 		;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
@@ -211,6 +211,7 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 
 
 
+
 		for qq=0,n_rays-1 do begin
 
 			;get rid of NaN values
@@ -221,11 +222,16 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 				ray_valst = ray_vals[goo,qq]
 			endif
 
+
+
 			s = n_elements(rayxt)
 			colors = long(bytscl(ray_valst,min=minv,max=maxv))
 			goober = where(colors eq 0)
 			if goober[0] ne -1 then colors[goober] = 1
 
+PRINT,'***NEED TO MODIFY THIS FOR LONGIT...I.E. PLACE THE PLOT IN MERIDIONAL PLANE. '
+PRINT,'***ONLY WORKS SO FAR WHEN LONGIT = 0. BUT, THE RAY TRACING MODEL HAS LONGITUDINAL DEPENDENCIES'
+stop
 			for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=colors[j], Thick=2
 		endfor
 
@@ -238,6 +244,8 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 		divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
 
 	endif else begin
+
+
 		;plot the rays without any color fill value
 		plot,[0,0],color=1,/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
 		for qq=0,n_rays-1 do begin
@@ -248,7 +256,7 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 				zcoordt = zcoord[goo,qq]
 			endif
 
-			oplot,xcoordt,zcoordt,color=colors[qq]
+			oplot,xcoordt/cos(longit*!dtor),zcoordt,color=colors[qq]
 		endfor
 	endelse
 
@@ -270,7 +278,7 @@ pro plot_rays,rayx,rayy,rayz,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,x
 
 	;_________________Equatorial Plane__________________
 
-	skip = 'yes'
+	skip = 'no'
 
 	if skip ne 'yes' then begin
 
