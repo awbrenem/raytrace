@@ -43,6 +43,7 @@ pro create_rays_general,freqv,$
   theta=thetav,$
   alt=altv,$
   lat=latv,$
+  long=longv,$
   title=title,rootdir=rootdir
 
   nrays = n_elements(freqv)
@@ -114,13 +115,13 @@ pro create_rays_general,freqv,$
 
 
 
-
   ;loop through all the theta values
   for qq=0,nrays-1 do begin
 
     ti = read_write_trace_in(freq=freqv[qq],$
     ;    mmult = .80,$
     lat=latv[qq],$
+    long=longv[qq],$
     theta=thetav[qq],$
     ;    phi=0.,$
     alt=altv[qq])
@@ -203,13 +204,6 @@ pro create_rays_general,freqv,$
     kz0[0:npts-1,qq] = kz0[0,qq]
 
   endfor
-
-
-
-
-
-
-
 
 
 
