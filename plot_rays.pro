@@ -39,7 +39,14 @@
 ;				psonly -> only plot ps (to ~/Desktop/rayplot.ps)
 ;				k_spacing -> spacing of k-vector arrows (km). Defaults to 300 km
 ;				minv, maxv -> min and max color values to plot
-;
+;				raycolor -> pretty clear what this is...
+;				geocoord -> The IGRF model in trace.for requires input in geographic coord
+;						and outputs geographic coord. Set this keyword to transform this
+;						output to SM coord before plotting. MUST ALSO SET GEOTIME HERE
+;						SO COTRANS KNOWS HOW TO PROPERLY TRANSFORM
+;				geotime -> Time that the ray tracing occurs. Necessary for coord transformation
+;						from geographic coord to SM coord (e.g. '2016-01-20/19:44')
+
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
 ;   NOTES:
@@ -54,17 +61,38 @@
 ;*****************************************************************************************
 ;-
 
-pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zrangeM,xrangeE=xrangeE,$
-	yrangeE=yrangeE,ray_struct=ray_struct,colors=colors,colorsX=colorsX,oplotX=oplotX,kvecs=kvecs,Lsc=Lsc,$
-	psonly=psonly,k_spacing=k_spacing,minval=minv,maxval=maxv,raycolor=raycolor
+pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
+	xrangeM=xrangeM,zrangeM=zrangeM,xrangeE=xrangeE,yrangeE=yrangeE,$
+	ray_struct=ray_struct,$
+	colors=colors,colorsX=colorsX,$
+	oplotX=oplotX,$
+	kvecs=kvecs,$
+	Lsc=Lsc,$
+	psonly=psonly,$
+	k_spacing=k_spacing,$
+	minval=minv,maxval=maxv,$
+	raycolor=raycolor,$
+	geocoord=geocoord,geotime=geotime
 
 
-	;rbsp_efw_init
 	if ~KEYWORD_SET(raycolor) then raycolor = 254
 	if ~KEYWORD_SET(minv) then minv=10.
 	if ~KEYWORD_SET(maxv) then maxv=500.
 	if ~KEYWORD_SET(alpha) then alpha = 0.
 	if ~keyword_set(k_spacing) then k_spacing = 300.
+	if KEYWORD_SET(geocoord) and ~KEYWORD_SET(geotime) then begin
+		print,'*********************'
+		print,'*********************'
+		print,'*********************'
+		print,'NEED TO INPUT A TIME (GEOTIME) FOR THE TRANSFORMATION FROM GEOGRAPHIC COORD TO SM COORD'
+		print,'....returning'
+		print,'*********************'
+		print,'*********************'
+		print,'*********************'
+		return
+	endif
+
+
 	if ~keyword_set(psonly) then begin
 
 		;modify color table so first element is white
@@ -100,53 +128,69 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zr
 	endelse
 
 
+	;-------------------------------------------------------
+	;The IGRF model inputs and outputs in geographic coord.
+	;Transform these here to SM coord
+	;-------------------------------------------------------
+
+	xcoordSM = xcoord
+	ycoordSM = xcoord
+	zcoordSM = xcoord
+	xcoordSM[*] = 0.
+	ycoordSM[*] = 0.
+	zcoordSM[*] = 0.
+
+
+
+	if KEYWORD_SET(geocoord) then begin
+
+		for qq=0,n_rays-1 do begin
+
+			tmin = time_double(geotime)
+			tmax = tmin + 1.
+			dt = tmax-tmin
+			nelem = n_elements(xcoord[*,qq])
+			times = dt*indgen(nelem)/(nelem-1) + tmin
+
+
+			store_data,'geocoordtmp',times,[[xcoord[*,qq]],[ycoord[*,qq]],[zcoord[*,qq]]]
+			cotrans,'geocoordtmp','geicoordtmp',/geo2gei
+			cotrans,'geicoordtmp','gsecoordtmp',/gei2gse
+			cotrans,'gsecoordtmp','gsmcoordtmp',/gse2gsm
+			cotrans,'gsmcoordtmp','smcoordtmp',/gsm2sm
+
+			get_data,'smcoordtmp',tt,vals
+			xcoordSM[*,qq] = vals[*,0]
+			ycoordSM[*,qq] = vals[*,1]
+			zcoordSM[*,qq] = vals[*,2]
+
+			;clean up...
+			store_data,['geocoordtmp','geicoordtmp','gsecoordtmp','gsmcoordtmp','smcoordtmp'],/delete
+
+		endfor
+
+	endif
+
+
 	if ~keyword_set(colors) then colors=replicate(raycolor,n_rays)
-
 	if keyword_set(oplotX) and ~keyword_set(colorsX) then colorsX=replicate(raycolor,n_elements(oplotX[*,0]))
-
 	if ~keyword_set(xrangeM) then xrangeM=[0.,6.]
 	if ~keyword_set(zrangeM) then zrangeM=[-3.,3.]
 	if ~keyword_set(xrangeE) then xrangeE=xrangeM
 	if ~keyword_set(yrangeE) then yrangeE=[-3.,3.]
+
+
+
 	;-----------------------
 
-	earthx = COS((2*!PI/99.0)*FINDGEN(100))
-	earthy = SIN((2*!PI/99.0)*FINDGEN(100))
-
-	;latitude lines
-	lats = [0,10,20,30,40,50,60,70,80]
-	lats = [-1*reverse(lats[1:n_elements(lats)-1]),lats]
-
 	!P.multi=[0,0,2]
-
-	L2 = dipole(2.)
-	L4 = dipole(4.)
-	L5 = dipole(5.)
-	L6 = dipole(6.)
-	L8 = dipole(8.)
-
-
-	if ~keyword_set(Lsc) then Lst = dipole(1.001) else begin
-		LstR = 0.
-		Lstlat = 0.
-		for i=0,n_elements(Lsc)-1 do begin
-			Lsttmp = dipole(Lsc[i])
-			LstR = [LstR,Lsttmp.R]
-			Lstlat = [Lstlat,Lsttmp.lat]
-		endfor
-		Lst = {R:LstR[1:n_elements(LstR)-1],lat:Lstlat[1:n_elements(LstR)-1]}
-	endelse
-
-
-	circ = 4*cos(2*!pi*indgen(n_elements(L2.R))/(n_elements(L2.R)-1))*(360.-0.)
-
 
 	;DETERMINE WHICH K-VALUES TO OVERPLOT
 	if keyword_set(kvecs) then begin
 
 		;determine path distance traveled by ray
 		b=0
-		foo = 6370.*sqrt(xcoord[*,b]^2 + ycoord[*,b]^2 + zcoord[*,b]^2)
+		foo = 6370.*sqrt(xcoordSM[*,b]^2 + ycoordSM[*,b]^2 + zcoordSM[*,b]^2)
 		pathseg = fltarr(n_elements(foo))
 		pathD = pathseg
 		for i=0,n_elements(foo)-2 do pathseg[i] = (abs(foo[i+1] - foo[i]))
@@ -177,62 +221,39 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,xrangeM=xrangeM,zrangeM=zr
 	endif
 
 
-
-
-
 	;_________________Meridional Plane__________________
 
 
 	if KEYWORD_SET(ray_vals) then begin
 
-;		if minv lt 1 then minv = 1. ;can't have values < 1 due to log scale
-
-
-		cgPlot, rayx, rayz, /NoData,xrange=xrangeM,yrange=zrangeM,xstyle=1,ystyle=1,position=aspect(1)
-
-		oplot,earthx,earthy,color=60
-		;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
-
-		oplot,replicate(1.078,360.)*cos(indgen(360.)*!dtor),replicate(1.078,360.)*sin(indgen(360.)*!dtor),color=80
-		oplot,L2.R/6370.*cos(L2.lat*!dtor),L2.R/6370.*sin(L2.lat*!dtor),color=120
-		oplot,L2.R/6370.*cos(L2.lat*!dtor),-1*L2.R/6370.*sin(L2.lat*!dtor),color=120
-
-		oplot,L4.R/6370.*cos(L4.lat*!dtor),L4.R/6370.*sin(L4.lat*!dtor),color=120
-		oplot,L4.R/6370.*cos(L4.lat*!dtor),-1*L4.R/6370.*sin(L4.lat*!dtor),color=120
-
-		oplot,L5.R/6370.*cos(L5.lat*!dtor),L5.R/6370.*sin(L5.lat*!dtor),color=120
-		oplot,L5.R/6370.*cos(L5.lat*!dtor),-1*L5.R/6370.*sin(L5.lat*!dtor),color=120
-
-		oplot,L6.R/6370.*cos(L6.lat*!dtor),L6.R/6370.*sin(L6.lat*!dtor),color=120
-		oplot,L6.R/6370.*cos(L6.lat*!dtor),-1*L6.R/6370.*sin(L6.lat*!dtor),color=120
-
-		oplot,L8.R/6370.*cos(L8.lat*!dtor),L8.R/6370.*sin(L8.lat*!dtor),color=120
-		oplot,L8.R/6370.*cos(L8.lat*!dtor),-1*L8.R/6370.*sin(L8.lat*!dtor),color=120
-
-
-
+		cgPlot, xcoordSM, zcoordSM, /NoData,xrange=xrangeM,yrange=zrangeM,xstyle=1,ystyle=1,position=aspect(1)
 
 		for qq=0,n_rays-1 do begin
-
 			;get rid of NaN values
 			goo = where(finite(rayx[*,qq]) ne 0)
 			if goo[0] ne -1 then begin
-				rayxt = rayx[goo,qq]
-				rayzt = rayz[goo,qq]
+				xcoordt = xcoordSM[goo,qq]
+				ycoordt = ycoordSM[goo,qq]
+				zcoordt = zcoordSM[goo,qq]
+				longitt = longit[goo,qq]
 				ray_valst = ray_vals[goo,qq]
+				;deviation away from the initial (Meridional) longitude
+				;...usually pretty insignificant for phi=0 or 180 deg rays
+				longitt_relative = longitt[goo] - longitt[0]
 			endif
 
 
-
-			s = n_elements(rayxt)
+			s = n_elements(xcoordt)
 			colors = long(bytscl(ray_valst,min=minv,max=maxv))
 			goober = where(colors eq 0)
 			if goober[0] ne -1 then colors[goober] = 1
 
-PRINT,'***NEED TO MODIFY THIS FOR LONGIT...I.E. PLACE THE PLOT IN MERIDIONAL PLANE. '
-PRINT,'***ONLY WORKS SO FAR WHEN LONGIT = 0. BUT, THE RAY TRACING MODEL HAS LONGITUDINAL DEPENDENCIES'
-stop
-			for j=0,s-2 do cgPlotS, [rayxt[j], rayxt[j+1]], [rayzt[j], rayzt[j+1]], Color=colors[j], Thick=2
+			meridx = sqrt(xcoordt^2 + ycoordt^2)
+
+			for j=0,s-2 do cgPlotS,[meridx[j]*cos(longitt_relative[j]*!dtor), $
+															meridx[j+1]*cos(longitt_relative[j+1]*!dtor)],$
+														 [zcoordt[j], zcoordt[j+1]], Color=colors[j], Thick=2
+
 		endfor
 
 		;Plot colorbar
@@ -245,65 +266,38 @@ stop
 
 	endif else begin
 
-
 		;plot the rays without any color fill value
 		plot,[0,0],color=1,/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
 		for qq=0,n_rays-1 do begin
 
 			goo = where(finite(rayx[*,qq]) ne 0)
 			if goo[0] ne -1 then begin
-				xcoordt = xcoord[goo,qq]
-				zcoordt = zcoord[goo,qq]
+				xcoordt = xcoordSM[goo,qq]
+				ycoordt = ycoordSM[goo,qq]
+				zcoordt = zcoordSM[goo,qq]
+				longitt = longit[goo,qq]
+				;deviation away from the initial (Meridional) longitude
+				;...usually pretty insignificant for phi=0 or 180 deg rays
+;				longitt_relative = longitt[*,qq] - longitt[0,qq]
+				longitt_relative = longitt[goo] - longitt[0]
 			endif
 
-			oplot,xcoordt/cos(longit*!dtor),zcoordt,color=colors[qq]
+			meridx = sqrt(xcoordt^2 + ycoordt^2)
+			oplot,meridx*cos(longitt_relative*!dtor),zcoordt,color=colors[qq]
+
 		endfor
 	endelse
 
-
-
-
-	if keyword_set(Lsc) then oplot,Lst.R/6370.*cos(Lst.lat*!dtor),Lst.R/6370.*sin(Lst.lat*!dtor),color=160 & oplot,Lst.R/6370.*cos(Lst.lat*!dtor),-1*Lst.R/6370.*sin(Lst.lat*!dtor),color=160
-
-	for i=0,n_elements(lats)-1 do oplot,[1,50]*cos([lats[i]*!dtor,lats[i]*!dtor]),[1,50]*sin([lats[i]*!dtor,lats[i]*!dtor]),linestyle=3,color=100
-
-	if keyword_set(oplotX) then begin
-		for i=0,n_elements(oplotX[*,0])-1 do oplot,[oplotX[i,0]],[oplotX[i,2]],psym=7,color=colorsX[i]
-	endif
-	if keyword_set(kvecs) then begin
-		for bb=0,n_elements(kx2)-1 do oplot,[xc2[bb],xc2[bb]+kx2[bb]*sizexM],[zc2[bb],zc2[bb]+kz2[bb]*sizezM];,color=100
-	endif
+	oplot_earth_mlat_L_lines
 
 
 
 	;_________________Equatorial Plane__________________
 
-	skip = 'no'
+	plot,[0,0],/nodata,xrange=xrangeE,yrange=yrangeE,ystyle=1,xstyle=1,title='Equatorial Plane',xtitle='x (SM)',ytitle='y (SM)'
 
-	if skip ne 'yes' then begin
-
-		plot,[0,0],/nodata,xrange=xrangeE,yrange=yrangeE,ystyle=1,xstyle=1,title='Equatorial Plane',xtitle='x (SM)',ytitle='y (SM)'
-
-		for qq=0,n_rays-1 do oplot,xcoord[*,qq],ycoord[*,qq],color=colors[qq]
-		oplot,earthx,earthy,color=60
-
-		oplot,replicate(1.078,360.)*cos(indgen(360.)*!dtor),replicate(1.078,360.)*sin(indgen(360.)*!dtor),color=80
-		oplot,replicate(2,360.)*cos(indgen(360.)*!dtor),replicate(2,360.)*sin(indgen(360.)*!dtor),color=120
-		oplot,replicate(4,360.)*cos(indgen(360.)*!dtor),replicate(4,360.)*sin(indgen(360.)*!dtor),color=120
-		oplot,replicate(6,360.)*cos(indgen(360.)*!dtor),replicate(6,360.)*sin(indgen(360.)*!dtor),color=120
-		oplot,replicate(8,360.)*cos(indgen(360.)*!dtor),replicate(8,360.)*sin(indgen(360.)*!dtor),color=120
-
-
-		;if keyword_set(Lsc) then oplot,replicate(Lst.R[0]/6370.,360.),indgen(360.)*!dtor,/polar,color=120
-		if keyword_set(oplotX) then begin
-			for i=0,n_elements(oplotX[*,0])-1 do oplot,[oplotX[i,0]],[oplotX[i,1]],psym=7,color=colorsX[i]
-		endif
-		if keyword_set(kvecs) then begin
-			for bb=0,n_elements(kx2)-1 do oplot,[xc2[bb],xc2[bb]+kx2[bb]*sizexE],[yc2[bb],yc2[bb]+ky2[bb]*sizeyE];,color=100
-		endif
-
-
-	endif
+	for qq=0,n_rays-1 do oplot,xcoordSM[*,qq],ycoordSM[*,qq],color=colors[qq]
+	oplot_earth_mlat_L_lines,/eq_plane
 
 
 	if keyword_set(psonly) then pclose
@@ -312,7 +306,5 @@ stop
 	;		device,/close
 	;		set_plot,'x'
 	;	endif
-
-
 
 end
