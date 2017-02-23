@@ -9,6 +9,7 @@
 ;
 ; KEYWORDS: xcoord -> [n,3] array of ray xcoordinate values
 ;           ycoord -> [n,3] array of ray ycoordinate values
+;				    longit -> ray longitude. Needed to extract the Meridional plane (xcoord/cos(longit))
 ;           vals -> [n,3] array of ray values of desired quantity
 ;           nlines --> number of grid lines (defaults to 400-1)
 ;           limits --> [x0,y0,x1,y1] limits for gridding
@@ -28,13 +29,15 @@
 ;-
 
 
-pro triangulate_rays,xcoord,ycoord,vals,$
+pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   nlines=nlines,limits=limits,minv=minv,maxv=maxv,$
   nlvls=nlvls,xrange=xrange,yrange=yrange,lsc=lsc,$
   xgrid=xg,ygrid=yg,result=result,$
   mlats=mlats,lvals=lvals,rads=rads,ilats=ilats,$
   psonly=psonly,zbuffer=zbuffer,$
-  maxtrianglesize=mts,noplot=np
+  maxtrianglesize=mts,noplot=np,$
+  geocoord=geocoord,geotime=geotime
+
 
 
   if KEYWORD_SET(zbuffer) then begin
@@ -57,11 +60,63 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   if ~keyword_set(minv) then minv = min(vals)
   if ~keyword_set(maxv) then maxv = max(vals)
   if ~KEYWORD_SET(nlvls) then nlvls=10
+  if KEYWORD_SET(geocoord) and ~KEYWORD_SET(geotime) then begin
+		print,'*********************'
+		print,'*********************'
+		print,'*********************'
+		print,'NEED TO INPUT A TIME (GEOTIME) FOR THE TRANSFORMATION FROM GEOGRAPHIC COORD TO SM COORD'
+		print,'....returning'
+		print,'*********************'
+		print,'*********************'
+		print,'*********************'
+		return
+	endif
+
+
+  ;create relative longitude variable. The initial longitude for each ray helps to define
+  ;the meridional plane. As the longitude changes for each ray we must take this into account.
+  longit_ref = longit[0,*]
+  longit_relative = longit
+  longit_relative[*] = 0.
+  for bb=0,n_elements(longit[0,*])-1 do longit_relative[*,bb] = longit[*,bb] - longit_ref[bb]
+
 
   ;turn into 1D arrays
   xv = reform(reform(xcoord,n_elements(xcoord),1))
   yv = reform(reform(ycoord,n_elements(ycoord),1))
+  zv = reform(reform(zcoord,n_elements(zcoord),1))
   valsF = reform(reform(vals,n_elements(ycoord),1))
+  lg = reform(reform(longit,n_elements(longit),1))
+  lg_relative = reform(reform(longit_relative,n_elements(longit_relative),1))
+
+
+  if KEYWORD_SET(geocoord) then begin
+;    times = indgen(n_elements(xv)) + time_double(geotime)
+    tmin = time_double(geotime)
+    tmax = tmin + 1.
+    dt = tmax-tmin
+    nelem = n_elements(xv)
+    times = dt*indgen(nelem)/(nelem-1) + tmin
+
+		store_data,'geocoordtmp',times,[[xv],[yv],[zv]]
+		cotrans,'geocoordtmp','geicoordtmp',/geo2gei
+		cotrans,'geicoordtmp','gsecoordtmp',/gei2gse
+		cotrans,'gsecoordtmp','gsmcoordtmp',/gse2gsm
+		cotrans,'gsmcoordtmp','smcoordtmp',/gsm2sm
+
+		get_data,'smcoordtmp',tt,valstmp
+		xv = valstmp[*,0]
+		yv = valstmp[*,1]
+		zv = valstmp[*,2]
+
+		;clean up...
+		store_data,['geocoordtmp','geicoordtmp','gsecoordtmp','gsmcoordtmp','smcoordtmp'],/delete
+
+
+  endif
+
+
+
 
   if ~KEYWORD_SET(xrange) then xrange=[limits[0],limits[2]]
   if ~KEYWORD_SET(yrange) then yrange=[limits[1],limits[3]]
@@ -73,16 +128,23 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   if goo[0] ne -1 then xv[goo] = 0.
   goo = where(finite(yv) eq 0.)
   if goo[0] ne -1 then yv[goo] = 0.
+  goo = where(finite(zv) eq 0.)
+  if goo[0] ne -1 then zv[goo] = 0.
+  goo = where(finite(lg_relative) eq 0.)
+  if goo[0] ne -1 then lg_relative[goo] = 0.
+
+  ;get vertices of Meridional plane triangles and plot
+  meridx = sqrt(xv^2 + yv^2)
+  triangulate,meridx*cos(lg_relative*!dtor),zv,tr
+;  triangulate,xv,zv,tr
 
 
-  ;get vertices of triangles and plot
-  triangulate,xv,yv,tr
 
 
-  ;plot,xv,yv,psym=1,title='triangles'
+  ;plot,xv,zv,psym=1,title='triangles'
   ;for i=0,n_elements(tr)/3 - 1 do begin ;$
   ;    t=[tr[*,i],tr[0,i]]  ;& $
-  ;    plots,xv[t],yv[t]
+  ;    plots,xv[t],zv[t]
   ;endfor
   ;stop
 
@@ -93,11 +155,11 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   nelem=n_elements(tr[0,*])
   while(u LT nelem) do begin ;$
     xc=xv(tr[*,u]) ;& $  ;vertices of current triangle
-    yc=yv(tr[*,u]) ;& $
+    zc=zv(tr[*,u]) ;& $
 
-    sideA=sqrt((xc[0]-xc[1])^2 + (yc[0]-yc[1])^2); & $
-    sideB=sqrt((xc[2]-xc[0])^2 + (yc[2]-yc[0])^2); & $
-    sideC=sqrt((xc[2]-xc[1])^2 + (yc[2]-yc[1])^2); & $
+    sideA=sqrt((xc[0]-xc[1])^2 + (zc[0]-zc[1])^2); & $
+    sideB=sqrt((xc[2]-xc[0])^2 + (zc[2]-zc[0])^2); & $
+    sideC=sqrt((xc[2]-xc[1])^2 + (zc[2]-zc[1])^2); & $
     fail=0
 
     if(sideA GT mts) then fail=1 ;& $
@@ -109,21 +171,23 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   endwhile
 
 
-;  plot,xv,yv,title='triangles',xrange=[0,6],yrange=[-2,0],background=255,/nodata
+;  plot,xv,zv,title='triangles',xrange=[0,6],yrange=[-2,0],background=255,/nodata
 ;  for i=0,n_elements(tr)/3 - 1 do begin ;$
 ;    t=[tr[*,i],tr[0,i]] ;& $
-;    plots,xv[t],yv[t]
+;    plots,xv[t],zv[t]
 ;  endfor
   print,'LONG TRIANGLES REMOVED'
 
-
-  result = trigrid(xv,yv,valsF,tr,xgrid=xg,ygrid=yg,gridspacing,limits)
+  result = trigrid(xv,zv,valsF,tr,xgrid=xg,ygrid=yg,gridspacing,limits)
 
   if ~KEYWORD_SET(np) then begin
 
   contour,result,xg,yg,nlevels=nlvls,min_value=minv,max_value=maxv,$
   /cell_fill,xrange=xrange,yrange=yrange,xstyle=1,ystyle=1,$
   background=255,position=aspect(1),color=2
+
+  oplot_earth_mlat_L_lines
+
 
 
   ;plot colorbar
@@ -134,66 +198,6 @@ pro triangulate_rays,xcoord,ycoord,vals,$
   colorbar,POSITION=[0.15, 0.75, 0.85, 0.77],$
   divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
 
-
-
-  ;overplot earth, L shells, etc.
-  earthx = COS((2*!PI/99.0)*FINDGEN(100))
-  earthy = SIN((2*!PI/99.0)*FINDGEN(100))
-
-  ;latitude lines
-  lats = [0,10,20,30,40,50,60,70,80]
-  lats = [-1*reverse(lats[1:n_elements(lats)-1]),lats]
-
-  L2 = dipole(2.)
-  L4 = dipole(4.)
-  L6 = dipole(6.)
-  L5 = dipole(5.)
-  L8 = dipole(8.)
-
-  if ~keyword_set(Lsc) then Lst = dipole(1.001) else begin
-    LstR = 0.
-    Lstlat = 0.
-    for i=0,n_elements(Lsc)-1 do begin
-      Lsttmp = dipole(Lsc[i])
-      LstR = [LstR,Lsttmp.R]
-      Lstlat = [Lstlat,Lsttmp.lat]
-    endfor
-    Lst = {R:LstR[1:n_elements(LstR)-1],lat:Lstlat[1:n_elements(LstR)-1]}
-  endelse
-
-
-  oplot,earthx,earthy,color=60
-  ;oplot,replicate(1.078,360.),indgen(360.)*!dtor,/polar,color=80
-
-  oplot,replicate(1.078,360.)*cos(indgen(360.)*!dtor),replicate(1.078,360.)*sin(indgen(360.)*!dtor),color=80
-  oplot,L2.R/6370.*cos(L2.lat*!dtor),L2.R/6370.*sin(L2.lat*!dtor),color=120
-  oplot,L2.R/6370.*cos(L2.lat*!dtor),-1*L2.R/6370.*sin(L2.lat*!dtor),color=120
-
-  oplot,L4.R/6370.*cos(L4.lat*!dtor),L4.R/6370.*sin(L4.lat*!dtor),color=120
-  oplot,L4.R/6370.*cos(L4.lat*!dtor),-1*L4.R/6370.*sin(L4.lat*!dtor),color=120
-
-  oplot,L6.R/6370.*cos(L6.lat*!dtor),L6.R/6370.*sin(L6.lat*!dtor),color=120
-  oplot,L6.R/6370.*cos(L6.lat*!dtor),-1*L6.R/6370.*sin(L6.lat*!dtor),color=120
-
-  oplot,L5.R/6370.*cos(L5.lat*!dtor),L5.R/6370.*sin(L5.lat*!dtor),color=120
-  oplot,L5.R/6370.*cos(L5.lat*!dtor),-1*L5.R/6370.*sin(L5.lat*!dtor),color=120
-
-  oplot,L8.R/6370.*cos(L8.lat*!dtor),L8.R/6370.*sin(L8.lat*!dtor),color=120
-  oplot,L8.R/6370.*cos(L8.lat*!dtor),-1*L8.R/6370.*sin(L8.lat*!dtor),color=120
-
-
-  if keyword_set(Lsc) then oplot,Lst.R/6370.*cos(Lst.lat*!dtor),Lst.R/6370.*sin(Lst.lat*!dtor),color=160 & oplot,Lst.R/6370.*cos(Lst.lat*!dtor),-1*Lst.R/6370.*sin(Lst.lat*!dtor),color=160
-  for i=0,n_elements(lats)-1 do oplot,[1,50]*cos([lats[i]*!dtor,lats[i]*!dtor]),[1,50]*sin([lats[i]*!dtor,lats[i]*!dtor]),linestyle=3,color=100
-
-  ;for i=0,n_elements(lats)-1 do oplot,[1,50],[lats[i]*!dtor,lats[i]*!dtor],/polar,linestyle=3,color=100
-
-
-  ;    	if keyword_set(oplotX) then begin
-  ;    		for i=0,n_elements(oplotX[*,0])-1 do oplot,[oplotX[i,0]],[oplotX[i,2]],psym=7,color=colorsX[i]
-  ;    	endif
-  ;    	if keyword_set(kvecs) then begin
-  ;    		for bb=0,n_elements(kx2)-1 do oplot,[xc2[bb],xc2[bb]+kx2[bb]*sizexM],[zc2[bb],zc2[bb]+kz2[bb]*sizezM];,color=100
-  ;    	endif
 
 
 endif ;plot condition
