@@ -1,6 +1,6 @@
-;Calculates the time (msec) it takes an electron at an angle at/within the loss-cone
-;to go from one location to another. E.x., the time it takes an electron
-;scattered into loss cone at 20 deg to arrive at FIREBIRD at 500 km.
+;Calculates the time (sec) it takes an electron at a certain pitch angle
+;to go from one location to another. E.g., the time it takes an electron
+;at edge of loss cone at 20 deg mlat to arrive at FIREBIRD at 500 km.
 
 ;NaN values mean the ray doesn't reach mlat_fin
 
@@ -10,8 +10,8 @@
 ;lshell = dipole L-value for [x,nrays], say [10000,nrays] where each ray
 ; is allowed up to 10000 points
 ;mlat = magnetic lat (absolute value) for [x,nrays]
-;mlat_fin -> abs of magnetic lat of ending point (single value, deg).
-;e_energy -> [x,nrays] array of total e- energy (eV)
+;alt = final altitude of electron (e.g. 500 km FIREBIRD)
+;e_energy -> [x,nrays] array of total e- energy (keV)
 ;pa -> loss cone pitch angle
 ;opposite_hemisphere -> set if the scattering occurs in opposite hemisphere as
 ;   precipitation (e.g. counter-streaming cyclotron resonance). If set,
@@ -53,7 +53,6 @@ function electron_precipitation_time,$
       z = dp.s
 
 
-
       ;find array location of scattering point
       goo = where(dp.lat ge mlatt[i])
       loc1 = goo[0]
@@ -65,6 +64,7 @@ function electron_precipitation_time,$
       ;Array of steps along the field line
       dz = z - shift(z,1)
       dz = dz[1:n_elements(dz)-1]
+      dz = 1000.*dz   ;m
 
 
       ;start/stop points along field line for integration
@@ -88,7 +88,7 @@ function electron_precipitation_time,$
         for bb=0,n_elements(good)-1 do dt[bb] = dz[good[bb]]/sqrt(1-c*dp.B[good[bb]])
 
         ;Now sum the dt contributions from the interaction point to FIREBIRD
-        tots = total(dt)*1000.  ;NaN values mean the ray doesn't reach mlat_fin
+        tots = total(dt)  ;NaN values mean the ray doesn't reach mlat_fin
 
       endif else begin
         ;Precipitation in opposite sector as scattering (counterstream)
@@ -101,7 +101,7 @@ function electron_precipitation_time,$
         ;Every term in the sum from s1 to s2
         for bb=0,n_elements(good)-2 do dt[bb] = dz[good[bb]]/sqrt(1-c*dp.B[good[bb]])
         ;Now sum the dt contributions from the interaction point to FIREBIRD
-        tots1 = total(dt)*1000.
+        tots1 = total(dt)
 
         ;now integrate from magnetic eq to location of FB
         good = where((z ge 0) and (z le s2)) ;find elements to integrate over
@@ -111,40 +111,39 @@ function electron_precipitation_time,$
         for bb=0,n_elements(good)-2 do dt[bb] = dz[good[bb]]/sqrt(1-c*dp.B[good[bb]])
 
         ;Now sum the dt contributions from the interaction point to FIREBIRD
-        tots2 = total(dt)*1000.
+        tots2 = total(dt)
 
         tots = tots1 + tots2 ;NaN values mean the ray doesn't reach mlat_fin
       endelse
 
 
-
-      energy = e_energyt[i]*1.6d-19  ;Joules
+      energy = 1000.*e_energyt[i]*1.6d-19  ;Joules
       const = sqrt(me/2./energy)
+
+
       timeprecip[i,qq] = const*tots
 
 
-
-      ;RBSP_EFW> print,timeprecip
-      ;      0.19741298
-      ;RBSP_EFW> print,timeprecip
-      ;     0.055883683
 
       ;;Compare results to the result obtained by assuming that the Electron
       ;;does not slow down the entire flight
 
       ;;Initial velocity parallel (correct)
-      ;c_ms = 2.99792458d8      ; -Speed of light in vacuum (m/s)
-      ;fac1 = 0.511d6/(0.511d6 + 1000.*250000.)
-      ;fac1 = 1. - fac1^2
-      ;vpar0 = sqrt(c_ms^2*fac1)  ;m/s
-      ;
-      ;print,1000.*s2/vpar0
+;      c_ms = 2.99792458d8      ; -Speed of light in vacuum (m/s)
+;      fac1 = 0.511d6/(0.511d6 + 1000.*250000.)
+;      fac1 = 1. - fac1^2
+;      vpar0 = sqrt(c_ms^2*fac1)  ;m/s
+;
+;      print,1000.*s2/vpar0
 
     endfor
 
+    ;***Test output***
     ;NaN values mean the ray doesn't reach mlat_fin
-;    for u=0,340 do print,mlat[u,qq],e_energy[u,qq],timeprecip[u,qq]
-;    stop
+    ;for u=0,340 do print,mlat[u,qq],e_energy[u,qq],1000.*timeprecip[u,qq]
+    ;stop
+    ;***Test output***
+
   endfor
 
   return,timeprecip
