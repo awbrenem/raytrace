@@ -24,8 +24,10 @@ function electron_precipitation_time,$
   alt,$
   e_energy,$
   pa,$
+  bmult=bmult,$
   opposite_hemisphere=oh
 
+  if ~KEYWORD_SET(bmult) then bmult = 1.
 
   me = 9.11d-31   ;kg
 
@@ -49,12 +51,12 @@ function electron_precipitation_time,$
     for i=0,n_elements(lshellt)-1 do begin
 
       ;determine arc length along Bo field line
-      dp = dipole(lshellt[i])
+      dp = dipole(lshellt[i],bmult)
       z = dp.s
 
 
       ;find array location of scattering point
-      goo = where(dp.lat ge mlatt[i])
+      goo = where(dp.lat ge abs(mlatt[i]))
       loc1 = goo[0]
       ;find array location of "alt"
       goo = where(dp.r le (alt + 6370.))
@@ -90,6 +92,9 @@ function electron_precipitation_time,$
         ;Now sum the dt contributions from the interaction point to FIREBIRD
         tots = total(dt)  ;NaN values mean the ray doesn't reach mlat_fin
 
+;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then print,tots
+;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then stop
+
       endif else begin
         ;Precipitation in opposite sector as scattering (counterstream)
 
@@ -114,6 +119,9 @@ function electron_precipitation_time,$
         tots2 = total(dt)
 
         tots = tots1 + tots2 ;NaN values mean the ray doesn't reach mlat_fin
+;        if finite(tots) ne 0. and tots1 ne 0. then print,tots1,tots2
+;        if finite(tots) ne 0. and tots1 ne 0. then stop
+
       endelse
 
 
