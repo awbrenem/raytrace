@@ -35,8 +35,7 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   xgrid=xg,ygrid=yg,result=result,$
   mlats=mlats,lvals=lvals,rads=rads,ilats=ilats,$
   psonly=psonly,zbuffer=zbuffer,$
-  maxtrianglesize=mts,noplot=np,$
-  geocoord=geocoord,geotime=geotime
+  maxtrianglesize=mts,noplot=np
 
 
 
@@ -60,17 +59,6 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   if ~keyword_set(minv) then minv = min(vals)
   if ~keyword_set(maxv) then maxv = max(vals)
   if ~KEYWORD_SET(nlvls) then nlvls=10
-  if KEYWORD_SET(geocoord) and ~KEYWORD_SET(geotime) then begin
-		print,'*********************'
-		print,'*********************'
-		print,'*********************'
-		print,'NEED TO INPUT A TIME (GEOTIME) FOR THE TRANSFORMATION FROM GEOGRAPHIC COORD TO SM COORD'
-		print,'....returning'
-		print,'*********************'
-		print,'*********************'
-		print,'*********************'
-		return
-	endif
 
 
   ;create relative longitude variable. The initial longitude for each ray helps to define
@@ -88,33 +76,6 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   valsF = reform(reform(vals,n_elements(ycoord),1))
   lg = reform(reform(longit,n_elements(longit),1))
   lg_relative = reform(reform(longit_relative,n_elements(longit_relative),1))
-
-
-  if KEYWORD_SET(geocoord) then begin
-;    times = indgen(n_elements(xv)) + time_double(geotime)
-    tmin = time_double(geotime)
-    tmax = tmin + 1.
-    dt = tmax-tmin
-    nelem = n_elements(xv)
-    times = dt*indgen(nelem)/(nelem-1) + tmin
-
-		store_data,'geocoordtmp',times,[[xv],[yv],[zv]]
-		cotrans,'geocoordtmp','geicoordtmp',/geo2gei
-		cotrans,'geicoordtmp','gsecoordtmp',/gei2gse
-		cotrans,'gsecoordtmp','gsmcoordtmp',/gse2gsm
-		cotrans,'gsmcoordtmp','smcoordtmp',/gsm2sm
-
-		get_data,'smcoordtmp',tt,valstmp
-		xv = valstmp[*,0]
-		yv = valstmp[*,1]
-		zv = valstmp[*,2]
-
-		;clean up...
-		store_data,['geocoordtmp','geicoordtmp','gsecoordtmp','gsmcoordtmp','smcoordtmp'],/delete
-
-
-  endif
-
 
 
 
@@ -135,16 +96,14 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
 
   ;get vertices of Meridional plane triangles and plot
   meridx = sqrt(xv^2 + yv^2)
-  triangulate,meridx*cos(lg_relative*!dtor),zv,tr
-;  triangulate,xv,zv,tr
+  xv_merid = meridx*cos(lg_relative*!dtor)
 
+  triangulate,xv_merid,zv,tr
 
-
-
-  ;plot,xv,zv,psym=1,title='triangles'
+  ;plot,xv_merid,zv,psym=1,title='triangles'
   ;for i=0,n_elements(tr)/3 - 1 do begin ;$
   ;    t=[tr[*,i],tr[0,i]]  ;& $
-  ;    plots,xv[t],zv[t]
+  ;    plots,xv_merid[t],zv[t]
   ;endfor
   ;stop
 
@@ -154,7 +113,7 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   u=long(u)
   nelem=n_elements(tr[0,*])
   while(u LT nelem) do begin ;$
-    xc=xv(tr[*,u]) ;& $  ;vertices of current triangle
+    xc=xv_merid(tr[*,u]) ;& $  ;vertices of current triangle
     zc=zv(tr[*,u]) ;& $
 
     sideA=sqrt((xc[0]-xc[1])^2 + (zc[0]-zc[1])^2); & $
@@ -171,36 +130,39 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   endwhile
 
 
-;  plot,xv,zv,title='triangles',xrange=[0,6],yrange=[-2,0],background=255,/nodata
-;  for i=0,n_elements(tr)/3 - 1 do begin ;$
-;    t=[tr[*,i],tr[0,i]] ;& $
-;    plots,xv[t],zv[t]
-;  endfor
+  ;  plot,xv_merid,zv,title='triangles',xrange=[0,6],yrange=[-2,0],background=255,/nodata
+  ;  for i=0,n_elements(tr)/3 - 1 do begin ;$
+  ;    t=[tr[*,i],tr[0,i]] ;& $
+  ;    plots,xv_merid[t],zv[t]
+  ;  endfor
   print,'LONG TRIANGLES REMOVED'
 
-  result = trigrid(xv,zv,valsF,tr,xgrid=xg,ygrid=yg,gridspacing,limits)
+
+
+  result = trigrid(xv_merid,zv,valsF,tr,xgrid=xg,ygrid=yg,gridspacing,limits)
+
 
   if ~KEYWORD_SET(np) then begin
 
-  contour,result,xg,yg,nlevels=nlvls,min_value=minv,max_value=maxv,$
-  /cell_fill,xrange=xrange,yrange=yrange,xstyle=1,ystyle=1,$
-  background=255,position=aspect(1),color=2
+    contour,result,xg,yg,nlevels=nlvls,min_value=minv,max_value=maxv,$
+    /cell_fill,xrange=xrange,yrange=yrange,xstyle=1,ystyle=1,$
+    background=255,position=aspect(1),color=2
 
-  oplot_earth_mlat_L_lines
-
-
-
-  ;plot colorbar
-  loadct,39  ;need the first element to be black
-  nticks = 7.
-  tn = (indgen(nticks)/(nticks-1))*(maxv-minv)  + minv
-  tn = strtrim(string(tn,format='(f8.2)'),2)
-  colorbar,POSITION=[0.15, 0.75, 0.85, 0.77],$
-  divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
+    oplot_earth_mlat_L_lines,Lv=[2,4,5,6,8]
 
 
 
-endif ;plot condition
+    ;plot colorbar
+    loadct,39  ;need the first element to be black
+    nticks = 7.
+    tn = (indgen(nticks)/(nticks-1))*(maxv-minv)  + minv
+    tn = strtrim(string(tn,format='(f8.2)'),2)
+    colorbar,POSITION=[0.15, 0.75, 0.85, 0.77],$
+    divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
+
+
+
+  endif ;plot condition
 
 
   ;Calculate position values for each point crossed by a ray path
@@ -209,8 +171,8 @@ endif ;plot condition
   rads = fltarr(n_elements(xg),n_elements(yg))
   binvar = fltarr(n_elements(xg),n_elements(yg))
 
-;  ;Calculate position values of origin of ray for each point crossed by a ray path
-;  ;i.e. the value is a constant along a raypath and represents the value at ray inception.
+  ;  ;Calculate position values of origin of ray for each point crossed by a ray path
+  ;  ;i.e. the value is a constant along a raypath and represents the value at ray inception.
   mlat0 = fltarr(n_elements(xg),n_elements(yg))
   lval0 = fltarr(n_elements(xg),n_elements(yg))
   rad0 = fltarr(n_elements(xg),n_elements(yg))
@@ -219,16 +181,16 @@ endif ;plot condition
 
 
   for i=0,n_elements(xg)-1 do begin
-      for j=0,n_elements(yg)-1 do begin
-        mlats[i,j] = atan(yg[j]/xg[i])/!dtor
-        rads[i,j] = sqrt(xg[i]^2 + yg[j]^2)
-      endfor
+    for j=0,n_elements(yg)-1 do begin
+      rads[i,j] = sqrt(xg[i]^2 + yg[j]^2)
+      mlats[i,j] = atan(yg[j]/xg[i])/!dtor
+    endfor
   endfor
 
   lvals = rads/(cos(!dtor*mlats)^2)  ;L-shell in centered dipole
   ilats = acos(sqrt(1/lvals))/!dtor  ;invariant latitude
 
-;remove values where there is no ray_vals
+  ;remove values where there is no ray_vals
   goo = where(result ne 0.)
   if goo[0] ne -1 then binvar[goo] = 1.
 

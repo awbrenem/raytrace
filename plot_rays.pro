@@ -24,7 +24,7 @@
 ;  KEYWORDS:    rayx -> (*,n_rays) - Meridional x values (SM coord) for ray (RE)
 ;				rayy -> Equatorial y
 ;				rayz -> Meridional z
-;				longit -> ray longitude. Needed to extract the Meridional plane (xcoord/cos(longit))
+;				longit -> ray SM longitude. Needed to extract the Meridional plane (xcoord/cos(longit))
 ;				ray_struct -> the structure returned from read_trace_ta()
 ;				xrangeM -> Meridional x range in RE
 ;				zrangeM -> Meridional z range in RE
@@ -40,12 +40,6 @@
 ;				k_spacing -> spacing of k-vector arrows (km). Defaults to 300 km
 ;				minv, maxv -> min and max color values to plot
 ;				raycolor -> pretty clear what this is...
-;				geocoord -> The IGRF model in trace.for requires input in geographic coord
-;						and outputs geographic coord. Set this keyword to transform this
-;						output to SM coord before plotting. MUST ALSO SET GEOTIME HERE
-;						SO COTRANS KNOWS HOW TO PROPERLY TRANSFORM
-;				geotime -> Time that the ray tracing occurs. Necessary for coord transformation
-;						from geographic coord to SM coord (e.g. '2016-01-20/19:44')
 
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
@@ -71,8 +65,7 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 	psonly=psonly,$
 	k_spacing=k_spacing,$
 	minval=minv,maxval=maxv,$
-	raycolor=raycolor,$
-	geocoord=geocoord,geotime=geotime
+	raycolor=raycolor
 
 
 	if ~KEYWORD_SET(raycolor) then raycolor = 254
@@ -80,17 +73,6 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 	if ~KEYWORD_SET(maxv) then maxv=500.
 	if ~KEYWORD_SET(alpha) then alpha = 0.
 	if ~keyword_set(k_spacing) then k_spacing = 300.
-	if KEYWORD_SET(geocoord) and ~KEYWORD_SET(geotime) then begin
-		print,'*********************'
-		print,'*********************'
-		print,'*********************'
-		print,'NEED TO INPUT A TIME (GEOTIME) FOR THE TRANSFORMATION FROM GEOGRAPHIC COORD TO SM COORD'
-		print,'....returning'
-		print,'*********************'
-		print,'*********************'
-		print,'*********************'
-		return
-	endif
 
 
 	if ~keyword_set(psonly) then begin
@@ -115,61 +97,17 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 	endelse
 
 	if keyword_set(ray_struct) then begin
-		xcoord = ray_struct.xcoord
-		ycoord = ray_struct.ycoord
-		zcoord = ray_struct.zcoord
-		kvec = [[ray_struct.kx],[ray_struct.ky],[ray_struct.kz]]
+		xcoordSM = ray_struct.xcoord
+		ycoordSM = ray_struct.ycoord
+		zcoordSM = ray_struct.zcoord
+		;kvec = [[ray_struct.kx],[ray_struct.ky],[ray_struct.kz]]
 		n_rays = 1.
 	endif else begin
-		xcoord = rayx
-		ycoord = rayy
-		zcoord = rayz
+		xcoordSM = rayx
+		ycoordSM = rayy
+		zcoordSM = rayz
 		n_rays = n_elements(rayx[0,*])
 	endelse
-
-
-	;-------------------------------------------------------
-	;The IGRF model inputs and outputs in geographic coord.
-	;Transform these here to SM coord
-	;-------------------------------------------------------
-
-	xcoordSM = xcoord
-	ycoordSM = xcoord
-	zcoordSM = xcoord
-	xcoordSM[*] = 0.
-	ycoordSM[*] = 0.
-	zcoordSM[*] = 0.
-
-
-
-	if KEYWORD_SET(geocoord) then begin
-
-		for qq=0,n_rays-1 do begin
-
-			tmin = time_double(geotime)
-			tmax = tmin + 1.
-			dt = tmax-tmin
-			nelem = n_elements(xcoord[*,qq])
-			times = dt*indgen(nelem)/(nelem-1) + tmin
-
-
-			store_data,'geocoordtmp',times,[[xcoord[*,qq]],[ycoord[*,qq]],[zcoord[*,qq]]]
-			cotrans,'geocoordtmp','geicoordtmp',/geo2gei
-			cotrans,'geicoordtmp','gsecoordtmp',/gei2gse
-			cotrans,'gsecoordtmp','gsmcoordtmp',/gse2gsm
-			cotrans,'gsmcoordtmp','smcoordtmp',/gsm2sm
-
-			get_data,'smcoordtmp',tt,vals
-			xcoordSM[*,qq] = vals[*,0]
-			ycoordSM[*,qq] = vals[*,1]
-			zcoordSM[*,qq] = vals[*,2]
-
-			;clean up...
-			store_data,['geocoordtmp','geicoordtmp','gsecoordtmp','gsmcoordtmp','smcoordtmp'],/delete
-
-		endfor
-
-	endif
 
 
 	if ~keyword_set(colors) then colors=replicate(raycolor,n_rays)
@@ -183,7 +121,7 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 
 	;-----------------------
 
-	!P.multi=[0,0,2]
+	if KEYWORD_SET(ray_vals) then !p.multi=[0,0,1] else !P.multi=[0,0,2]
 
 	;DETERMINE WHICH K-VALUES TO OVERPLOT
 	if keyword_set(kvecs) then begin
@@ -251,8 +189,8 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 			meridx = sqrt(xcoordt^2 + ycoordt^2)
 
 			for j=0,s-2 do cgPlotS,[meridx[j]*cos(longitt_relative[j]*!dtor), $
-															meridx[j+1]*cos(longitt_relative[j+1]*!dtor)],$
-														 [zcoordt[j], zcoordt[j+1]], Color=colors[j], Thick=2
+			meridx[j+1]*cos(longitt_relative[j+1]*!dtor)],$
+			[zcoordt[j], zcoordt[j+1]], Color=colors[j], Thick=2
 
 		endfor
 
@@ -261,13 +199,15 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 		nticks = 7.
 		tn = (indgen(nticks)/(nticks-1))*(maxv-minv) + minv
 		tn = strtrim(string(tn,format='(f8.2)'),2)
-		colorbar,POSITION=[0.15, 0.85, 0.95, 0.90],$
+		colorbar,POSITION=[0.15, 0.9, 0.9, 0.92],$
 		divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
 
 	endif else begin
 
 		;plot the rays without any color fill value
-		plot,[0,0],color=1,/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
+		plot,[0,0],color=1,/nodata,xrange=xrangeM,yrange=zrangeM,ystyle=1,xstyle=1,$
+		title='Meridional Plane',xtitle='x (SM)',ytitle='z (SM)'
+
 		for qq=0,n_rays-1 do begin
 
 			goo = where(finite(rayx[*,qq]) ne 0)
@@ -278,26 +218,32 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 				longitt = longit[goo,qq]
 				;deviation away from the initial (Meridional) longitude
 				;...usually pretty insignificant for phi=0 or 180 deg rays
-;				longitt_relative = longitt[*,qq] - longitt[0,qq]
+				;				longitt_relative = longitt[*,qq] - longitt[0,qq]
 				longitt_relative = longitt[goo] - longitt[0]
 			endif
 
 			meridx = sqrt(xcoordt^2 + ycoordt^2)
 			oplot,meridx*cos(longitt_relative*!dtor),zcoordt,color=colors[qq]
 
+
 		endfor
 	endelse
 
-	oplot_earth_mlat_L_lines
+	oplot_earth_mlat_L_lines,Lv=[2,4,5,6,8]
 
 
 
 	;_________________Equatorial Plane__________________
 
-	plot,[0,0],/nodata,xrange=xrangeE,yrange=yrangeE,ystyle=1,xstyle=1,title='Equatorial Plane',xtitle='x (SM)',ytitle='y (SM)'
+	if ~KEYWORD_SET(ray_vals) then begin
 
-	for qq=0,n_rays-1 do oplot,xcoordSM[*,qq],ycoordSM[*,qq],color=colors[qq]
-	oplot_earth_mlat_L_lines,/eq_plane
+		plot,[0,0],/nodata,xrange=xrangeE,yrange=yrangeE,ystyle=1,xstyle=1,$
+		title='Equatorial Plane',xtitle='x (SM)',ytitle='y (SM)'
+
+		for qq=0,n_rays-1 do oplot,xcoordSM[*,qq],ycoordSM[*,qq],color=colors[qq]
+		oplot_earth_mlat_L_lines,/eq_plane,Lv=[2,4,5,6,8]
+
+	endif
 
 
 	if keyword_set(psonly) then pclose

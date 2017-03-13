@@ -19,46 +19,66 @@ function extract_lshell_mlat_slice,lval,mlat,xgrid,zgrid,gridvalues,gridpts=grid
 	;mlat-extract
 	if size(lval,/n_elements) eq 1 then begin
 
-		gridvals_final = fltarr(n_elements(mlat))
-		gridx = fltarr(n_elements(mlat))
+		gridvals_final = replicate(!values.f_nan,n_elements(mlat))
+		gridx = gridvals_final
 		gridz = gridx
+
 
 		for i=0,n_elements(mlat)-1 do begin
 			radt = lval*cos(mlat[i]*!dtor)^2
-			x_sm = radt*cos(mlat[i]*!dtor)
-			z_sm = radt*sin(mlat[i]*!dtor)
-			goo = where(xgrid ge x_sm)
-			gridx[i] = goo[0]
-			goo = where(zgrid ge z_sm)
-			gridz[i] = goo[0]
-			gridvals_final[i] = gridvalues[gridx[i],gridz[i]]
 
+			;allowing the ray to cross meridion planes here. This means that we don't
+			;have to factor in the cos(longitude)
+			meridx_sm = radt*cos(mlat[i]*!dtor)
+			meridz_sm = radt*sin(mlat[i]*!dtor)
+
+
+;		print,sqrt(meridx_sm^2 + meridz_sm^2)
+
+			goo = where(xgrid ge meridx_sm)
+			if goo[0] ne -1 then gridx[i] = goo[0]
+			boo = where(zgrid ge meridz_sm)
+			if boo[0] ne -1 then gridz[i] = boo[0]
+			gridvals_final[i] = gridvalues[gridx[i],gridz[i]]
+			;print,xgrid[gridx[i]],zgrid[gridz[i]]
+
+			goo = -1
+			boo = -1
 		endfor
 	endif
+
 
 
 
 	;lshell-extract
 	if size(mlat,/n_elements) eq 1 then begin
 
+
 		gridvals_final = fltarr(n_elements(lval))
 		gridx = fltarr(n_elements(lval))
 		gridz = gridx
 
 		for i=0,n_elements(lval)-1 do begin
+
+
+;****IS THIS RIGHT???.......
 			radt = lval*cos(lval[i]*!dtor)^2
-			x_sm = radt*cos(lval[i]*!dtor)
-			z_sm = radt*sin(lval[i]*!dtor)
-			goo = where(xgrid ge x_sm)
+			meridx_sm = radt*cos(lval[i]*!dtor)
+			meridz_sm = radt*sin(lval[i]*!dtor)
+stop
+
+			;****IS THIS RIGHT???.......
+			goo = where(xgrid ge meridx_sm)
 			gridx[i] = goo[0]
-			goo = where(zgrid ge z_sm)
+			goo = where(zgrid ge meridz_sm)
 			gridz[i] = goo[0]
 			gridvals_final[i] = gridvalues[gridx[i],gridz[i]]
 		endfor
 	endif
 
-	gridpts = [[gridx],[gridz]]
 
+
+	gridpts = [[gridx],[gridz]]
 	return,gridvals_final
 
 end

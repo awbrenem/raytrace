@@ -1,26 +1,27 @@
 TRACE (ray tracing) input values
 ___________________________________________________:_______|______|
-GEOMAG MODEL-COORDINATES (0:DIPOLE-MAG, 1:IGRF-GEO):1.00000
-IGRF OR DIPOLE INTERPOLATION DATE (IYEAR,IDOY)-----:   2005    209   
-MAGNETIC-FIELD multiplier (dipole model)-----------:0.650000
+GEOMAG MODEL-COORDINATES (0:DIPOLE-MAG, 1:IGRF-GEO):0
+IGRF OR DIPOLE INTERPOLATION DATE (IYEAR,IDOY)-----:2016    020   
+MAGNETIC-FIELD multiplier (dipole model)-----------:0.800000
 DENS MODEL (0..DIF EQUIL 1..+PLASMAPAUSE 2...+DUCT):0
---PLASMAPAUSE relative density change--------------:  0.600000E-01
+--PLASMAPAUSE relative density change--------------:0.600000
 --PLASMAPAUSE  L-HALF WIDTH------------------------:0.500000
 --PLASMAPAUSE L-CENTRAL POSITION-------------------:3.00000
---DUCT relative density enhancement----------------: -0.600000    
---DUCT L-HALF WIDTH--------------------------------:  0.500000    
---DUCT L-CENTRAL POSITION--------------------------:   6.65000 
-ALTITUDE of REFERENCE LEVEL (km)-------------------:   89.                           
-DENSITY AT the REFERENCE LEVEL (cm^-3)-------------:10000.0
---nH+/ne at 1000km---------------------------------:   120.000    
---nHe+/ne at 1000km--------------------------------:   1.00000    
---n0+/ne at 1000km---------------------------------:        0.   
---temperature at 1000km (K)------------------------:        0.    
-Initial latitude (deg)-----------------------------:-0.930000
-Final latitude (deg)-------------------------------:-50.0000
-Initial longitude (deg)----------------------------:   80.0000    
-Initial altitude (km)------------------------------:27964.3
+--DUCT relative density enhancement----------------:-0.600000    
+--DUCT L-HALF WIDTH--------------------------------:0.500000    
+--DUCT L-CENTRAL POSITION--------------------------:6.65000 
+ALTITUDE of the IONOSPHERIC BASE (km)--------------:89.                           
+ALTITUDE of REFERENCE LEVEL (km)-------------------:27391.0
+DENSITY AT the REFERENCE LEVEL (cm^-3)-------------:10.0000
+--nH+/ne at 1000km---------------------------------:1.00000    
+--nHe+/ne at 1000km--------------------------------:0.   
+--n0+/ne at 1000km---------------------------------:0.    
+--temperature at 1000km (K)------------------------:1000.00    
+Initial latitude (deg)-----------------------------:0.00000
+Final latitude (deg)-------------------------------:-38.0000
+Initial longitude (deg)----------------------------:0.00000
+Initial altitude (km)------------------------------:26117.0
 Final altitude (km)--------------------------------:4000.00
-Frequency (Hz)-------------------------------------:1800.00
-INITIAL VALUE OF THETA (deg)-----------------------:0.00000
+Frequency (Hz)-------------------------------------:1700.00
+INITIAL VALUE OF THETA (deg)-----------------------:150.000
 INITIAL VALUE OF Phi (deg)-------------------------:0.00000

@@ -35,7 +35,7 @@ function electron_precipitation_time,$
   if tmp[0] ne 1 then nrays = tmp[2] else nrays = 1.
 
   timeprecip = lshell
-  timeprecip[*] = 0.
+  timeprecip[*] = 0d
 
 
   for qq=0,nrays-1 do begin
@@ -59,14 +59,14 @@ function electron_precipitation_time,$
       goo = where(dp.lat ge abs(mlatt[i]))
       loc1 = goo[0]
       ;find array location of "alt"
-      goo = where(dp.r le (alt + 6370.))
+      goo = where(dp.r le (alt + 6370d))
       loc2 = goo[0]
 
 
       ;Array of steps along the field line
       dz = z - shift(z,1)
       dz = dz[1:n_elements(dz)-1]
-      dz = 1000.*dz   ;m
+      dz = 1000d*dz   ;m
 
 
       ;start/stop points along field line for integration
@@ -77,7 +77,7 @@ function electron_precipitation_time,$
       ;magnetic field value at point of loss cone scattering (s1)
       Bo = dp.B[loc1]
       ;constant inside the integrand
-      c = (1/Bo)*sin(pa*!dtor)^2
+      c = (1d/Bo)*sin(pa*!dtor)^2
 
       ;Precipitation in same sector as scattering (costream, Landau)
       if ~KEYWORD_SET(oh) then begin
@@ -125,8 +125,8 @@ function electron_precipitation_time,$
       endelse
 
 
-      energy = 1000.*e_energyt[i]*1.6d-19  ;Joules
-      const = sqrt(me/2./energy)
+      energy = 1000d*e_energyt[i]*1.6d-19  ;Joules
+      const = sqrt(me/2d/energy)
 
 
       timeprecip[i,qq] = const*tots

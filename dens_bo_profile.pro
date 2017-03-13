@@ -75,9 +75,12 @@ while test ne 'STOP' do begin
   ;if test ne 'STOP' then reads, inline,
   ;j, temp, FORMAT='(I2,6G10.3,F8.2,2F9.2,F7.2,F12.2,2F10.2)'
 
-  n[i]=strmid(inline,139,9)
-  r[i]=strmid(inline,53,8)
-  ffce[i]=strmid(inline,107,9)
+  if test ne 'STOP' then begin
+    n[i]=float(strmid(inline,120,8))
+    r[i]=float(strmid(inline,53,8))
+    ffce[i]=float(strmid(inline,101,9))
+  endif
+
   i=i+1
 endwhile
 close,1
@@ -88,6 +91,7 @@ print, 'n:', n[0:15]
 print, 'r:', r[0:15]
 print, 'b:', b[0:15]
 print, 'theta:', theta[0:15]
+
 
 n = n[0:i-1]
 r = r[0:i-1]
@@ -109,11 +113,7 @@ plot, r, b, /ylog, xrange=[2,6], yrange=[1,10000], xgridstyle=1, xticklen=1, $
 	ygridstyle=1, yticklen=1, title='Equatorial Bo Profile (nT)'
 if keyword_set(bo_sc) and keyword_set(L_sc) then oplot,L_sc,bo_sc,psym=7
 
-if keyword_set(ps) then begin
-  pclose
-;  device, /close
-;  set_plot, 'x'
-endif
+if keyword_set(ps) then pclose
 
 
 end

@@ -19,13 +19,13 @@
 ;  EXAMPLES:
 ;
 ;
-;  KEYWORDS:
+;  KEYWORDS: geo2sm -> tells read_trace_ta to convert from geographic coord to
+;                      SM coord. IGRF model of trace.for returns geographic coord.
 ;
 ;
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
-;   NOTES:     Program is only capable of changing the theta_kb value in the trace_in.txt file
-;			   To change other values use read_write_trace_in.pro
+;   NOTES:   Be sure to input geographic coord values if calling the IGRF model of trace.for
 ;
 ;
 ;   CREATED:  MM/DD/YYYY
@@ -44,7 +44,10 @@ pro create_rays_general,freqv,$
   alt=altv,$
   lat=latv,$
   long=longv,$
-  title=title,rootdir=rootdir
+  title=title,rootdir=rootdir,$
+  geotime=geotime
+
+  if ~KEYWORD_SET(geotime) then geotime = ''
 
   nrays = n_elements(freqv)
   npoints = 10000. ;max # of ray points
@@ -67,16 +70,21 @@ pro create_rays_general,freqv,$
   vek = replicate(!values.f_nan,npoints,nrays)
 
   radius = replicate(!values.f_nan,npoints,nrays)
-  lat = replicate(!values.f_nan,npoints,nrays)
-  longit = replicate(!values.f_nan,npoints,nrays)
+  latGEO = replicate(!values.f_nan,npoints,nrays)
+  latSM = replicate(!values.f_nan,npoints,nrays)
+  longitGEO = replicate(!values.f_nan,npoints,nrays)
+  longitSM = replicate(!values.f_nan,npoints,nrays)
   lval = replicate(!values.f_nan,npoints,nrays)
 
-  xcoord = replicate(!values.f_nan,npoints,nrays)
-  ycoord = replicate(!values.f_nan,npoints,nrays)
-  zcoord = replicate(!values.f_nan,npoints,nrays)
-  kx = replicate(!values.f_nan,npoints,nrays)
-  ky = replicate(!values.f_nan,npoints,nrays)
-  kz = replicate(!values.f_nan,npoints,nrays)
+  xcoordGEO = replicate(!values.f_nan,npoints,nrays)
+  ycoordGEO = replicate(!values.f_nan,npoints,nrays)
+  zcoordGEO = replicate(!values.f_nan,npoints,nrays)
+  xcoordSM = replicate(!values.f_nan,npoints,nrays)
+  ycoordSM = replicate(!values.f_nan,npoints,nrays)
+  zcoordSM = replicate(!values.f_nan,npoints,nrays)
+;  kx = replicate(!values.f_nan,npoints,nrays)
+;  ky = replicate(!values.f_nan,npoints,nrays)
+;  kz = replicate(!values.f_nan,npoints,nrays)
 
 
 
@@ -102,16 +110,21 @@ pro create_rays_general,freqv,$
   vek0 = replicate(!values.f_nan,npoints,nrays)
 
   radius0 = replicate(!values.f_nan,npoints,nrays)
-  lat0 = replicate(!values.f_nan,npoints,nrays)
-  longit0 = replicate(!values.f_nan,npoints,nrays)
+  latGEO0 = replicate(!values.f_nan,npoints,nrays)
+  latSM0 = replicate(!values.f_nan,npoints,nrays)
+  longitGEO0 = replicate(!values.f_nan,npoints,nrays)
+  longitSM0 = replicate(!values.f_nan,npoints,nrays)
   lval0 = replicate(!values.f_nan,npoints,nrays)
 
-  xcoord0 = replicate(!values.f_nan,npoints,nrays)
-  ycoord0 = replicate(!values.f_nan,npoints,nrays)
-  zcoord0 = replicate(!values.f_nan,npoints,nrays)
-  kx0 = replicate(!values.f_nan,npoints,nrays)
-  ky0 = replicate(!values.f_nan,npoints,nrays)
-  kz0 = replicate(!values.f_nan,npoints,nrays)
+  xcoordGEO0 = replicate(!values.f_nan,npoints,nrays)
+  ycoordGEO0 = replicate(!values.f_nan,npoints,nrays)
+  zcoordGEO0 = replicate(!values.f_nan,npoints,nrays)
+  xcoordSM0 = replicate(!values.f_nan,npoints,nrays)
+  ycoordSM0 = replicate(!values.f_nan,npoints,nrays)
+  zcoordSM0 = replicate(!values.f_nan,npoints,nrays)
+;  kx0 = replicate(!values.f_nan,npoints,nrays)
+;  ky0 = replicate(!values.f_nan,npoints,nrays)
+;  kz0 = replicate(!values.f_nan,npoints,nrays)
 
 
 
@@ -142,7 +155,11 @@ pro create_rays_general,freqv,$
 
 
     ;read in the ray values
-    x = read_trace_ta()
+    x = read_trace_ta(geotime=geotime)
+
+
+    ;See if there are any geographical coord tags.
+    geocoord = TAG_EXIST(x,'LatGEO')
 
 
     npts = n_elements(x.path)
@@ -151,22 +168,27 @@ pro create_rays_general,freqv,$
     timeG[0:npts-1,qq] = x.timeG[0:npts-1]
     path[0:npts-1,qq] = x.path[0:npts-1]
     radius[0:npts-1,qq] = x.R[0:npts-1]
-    lat[0:npts-1,qq] = x.lat[0:npts-1]
-    longit[0:npts-1,qq] = x.long[0:npts-1]
+    if geocoord then latGEO[0:npts-1,qq] = x.latGEO[0:npts-1]
+    latSM[0:npts-1,qq] = x.latSM[0:npts-1]
+    if geocoord then longitGEO[0:npts-1,qq] = x.longGEO[0:npts-1]
+    longitSM[0:npts-1,qq] = x.longSM[0:npts-1]
     lval[0:npts-1,qq] = x.L[0:npts-1]
 
     timeG[0:npts-1,qq] = x.timeG[0:npts-1]
-    xcoord[0:npts-1,qq] = x.xcoord[0:npts-1]
-    ycoord[0:npts-1,qq] = x.ycoord[0:npts-1]
-    zcoord[0:npts-1,qq] = x.zcoord[0:npts-1]
+    if geocoord then xcoordGEO[0:npts-1,qq] = x.xcoordGEO[0:npts-1]
+    if geocoord then ycoordGEO[0:npts-1,qq] = x.ycoordGEO[0:npts-1]
+    if geocoord then zcoordGEO[0:npts-1,qq] = x.zcoordGEO[0:npts-1]
+    xcoordSM[0:npts-1,qq] = x.xcoordSM[0:npts-1]
+    ycoordSM[0:npts-1,qq] = x.ycoordSM[0:npts-1]
+    zcoordSM[0:npts-1,qq] = x.zcoordSM[0:npts-1]
     thk[0:npts-1,qq] = x.thk[0:npts-1]
     phk[0:npts-1,qq] = x.phk[0:npts-1]
     thg[0:npts-1,qq] = x.thg[0:npts-1]
     azk[0:npts-1,qq] = x.azk[0:npts-1]
     vek[0:npts-1,qq] = x.vek[0:npts-1]
-    kx[0:npts-1,qq] = x.kx[0:npts-1]
-    ky[0:npts-1,qq] = x.ky[0:npts-1]
-    kz[0:npts-1,qq] = x.kz[0:npts-1]
+;    kx[0:npts-1,qq] = x.kx[0:npts-1]
+;    ky[0:npts-1,qq] = x.ky[0:npts-1]
+;    kz[0:npts-1,qq] = x.kz[0:npts-1]
     wavelength[0:npts-1,qq] = x.wl[0:npts-1]
     f_fce[0:npts-1,qq] = x.f_fce[0:npts-1]
     f_fch[0:npts-1,qq] = x.f_fch[0:npts-1]
@@ -192,16 +214,21 @@ pro create_rays_general,freqv,$
     vek0[0:npts-1,qq] = vek[0,qq]
 
     radius0[0:npts-1,qq] =radius[0,qq]
-    lat0[0:npts-1,qq] = lat[0,qq]
-    longit0[0:npts-1,qq] = longit[0,qq]
+    if geocoord then latGEO0[0:npts-1,qq] = latGEO[0,qq]
+    latSM0[0:npts-1,qq] = latSM[0,qq]
+    if geocoord then longitGEO0[0:npts-1,qq] = longitGEO[0,qq]
+    longitSM0[0:npts-1,qq] = longitSM[0,qq]
     lval0[0:npts-1,qq] = lval[0,qq]
 
-    xcoord0[0:npts-1,qq] = xcoord[0,qq]
-    ycoord0[0:npts-1,qq] = ycoord[0,qq]
-    zcoord0[0:npts-1,qq] = zcoord[0,qq]
-    kx0[0:npts-1,qq] = kx0[0,qq]
-    ky0[0:npts-1,qq] = ky0[0,qq]
-    kz0[0:npts-1,qq] = kz0[0,qq]
+    if geocoord then xcoordGEO0[0:npts-1,qq] = xcoordGEO[0,qq]
+    if geocoord then ycoordGEO0[0:npts-1,qq] = ycoordGEO[0,qq]
+    if geocoord then zcoordGEO0[0:npts-1,qq] = zcoordGEO[0,qq]
+    xcoordSM0[0:npts-1,qq] = xcoordSM[0,qq]
+    ycoordSM0[0:npts-1,qq] = ycoordSM[0,qq]
+    zcoordSM0[0:npts-1,qq] = zcoordSM[0,qq]
+;    kx0[0:npts-1,qq] = kx0[0,qq]
+;    ky0[0:npts-1,qq] = ky0[0,qq]
+;    kz0[0:npts-1,qq] = kz0[0,qq]
 
   endfor
 

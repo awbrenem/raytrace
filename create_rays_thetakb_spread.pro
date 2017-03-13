@@ -38,8 +38,9 @@
 ;*****************************************************************************************
 ;-
 
-pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=freqs
+pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=freqs,geotime=geotime
 
+  if ~KEYWORD_SET(geotime) then geotime = ''
 
   npoints = 10000. ;max # of ray points
 
@@ -63,16 +64,21 @@ pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=f
 
 
   radius = replicate(!values.f_nan,npoints,nthetas)
-  lat = replicate(!values.f_nan,npoints,nthetas)
-  longit = replicate(!values.f_nan,npoints,nthetas)
+  latGEO = replicate(!values.f_nan,npoints,nthetas)
+  latSM = replicate(!values.f_nan,npoints,nthetas)
+  longitGEO = replicate(!values.f_nan,npoints,nthetas)
+  longitSM = replicate(!values.f_nan,npoints,nthetas)
   lval = replicate(!values.f_nan,npoints,nthetas)
 
-  xcoord = replicate(!values.f_nan,npoints,nthetas)
-  ycoord = replicate(!values.f_nan,npoints,nthetas)
-  zcoord = replicate(!values.f_nan,npoints,nthetas)
-  kx = replicate(!values.f_nan,npoints,nthetas)
-  ky = replicate(!values.f_nan,npoints,nthetas)
-  kz = replicate(!values.f_nan,npoints,nthetas)
+  xcoordGEO = replicate(!values.f_nan,npoints,nthetas)
+  ycoordGEO = replicate(!values.f_nan,npoints,nthetas)
+  zcoordGEO = replicate(!values.f_nan,npoints,nthetas)
+  xcoordSM = replicate(!values.f_nan,npoints,nthetas)
+  ycoordSM = replicate(!values.f_nan,npoints,nthetas)
+  zcoordSM = replicate(!values.f_nan,npoints,nthetas)
+;  kx = replicate(!values.f_nan,npoints,nthetas)
+;  ky = replicate(!values.f_nan,npoints,nthetas)
+;  kz = replicate(!values.f_nan,npoints,nthetas)
 
 
 
@@ -96,7 +102,10 @@ pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=f
 
 
     ;read in the ray values
-    x = read_trace_ta()
+    x = read_trace_ta(geotime=geotime)
+
+    ;See if there are any geographical coord tags.
+    geocoord = TAG_EXIST(x,'LatGEO')
 
 
     npts = n_elements(x.path)
@@ -105,22 +114,27 @@ pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=f
     timeG[0:npts-1,qq] = x.timeG[0:npts-1]
     path[0:npts-1,qq] = x.path[0:npts-1]
     radius[0:npts-1,qq] = x.R[0:npts-1]
-    lat[0:npts-1,qq] = x.lat[0:npts-1]
-    longit[0:npts-1,qq] = x.long[0:npts-1]
+    if geocoord then latGEO[0:npts-1,qq] = x.latGEO[0:npts-1]
+    latSM[0:npts-1,qq] = x.latSM[0:npts-1]
+    if geocoord then longitGEO[0:npts-1,qq] = x.longGEO[0:npts-1]
+    longitSM[0:npts-1,qq] = x.longSM[0:npts-1]
     lval[0:npts-1,qq] = x.L[0:npts-1]
 
     timeG[0:npts-1,qq] = x.timeG[0:npts-1]
-    xcoord[0:npts-1,qq] = x.xcoord[0:npts-1]
-    ycoord[0:npts-1,qq] = x.ycoord[0:npts-1]
-    zcoord[0:npts-1,qq] = x.zcoord[0:npts-1]
+    if geocoord then xcoordGEO[0:npts-1,qq] = x.xcoordGEO[0:npts-1]
+    if geocoord then ycoordGEO[0:npts-1,qq] = x.ycoordGEO[0:npts-1]
+    if geocoord then zcoordGEO[0:npts-1,qq] = x.zcoordGEO[0:npts-1]
+    xcoordSM[0:npts-1,qq] = x.xcoordSM[0:npts-1]
+    ycoordSM[0:npts-1,qq] = x.ycoordSM[0:npts-1]
+    zcoordSM[0:npts-1,qq] = x.zcoordSM[0:npts-1]
     thk[0:npts-1,qq] = x.thk[0:npts-1]
     phk[0:npts-1,qq] = x.phk[0:npts-1]
     thg[0:npts-1,qq] = x.thg[0:npts-1]
     azk[0:npts-1,qq] = x.azk[0:npts-1]
     vek[0:npts-1,qq] = x.vek[0:npts-1]
-    kx[0:npts-1,qq] = x.kx[0:npts-1]
-    ky[0:npts-1,qq] = x.ky[0:npts-1]
-    kz[0:npts-1,qq] = x.kz[0:npts-1]
+;    kx[0:npts-1,qq] = x.kx[0:npts-1]
+;    ky[0:npts-1,qq] = x.ky[0:npts-1]
+;    kz[0:npts-1,qq] = x.kz[0:npts-1]
     wavelength[0:npts-1,qq] = x.wl[0:npts-1]
     f_fce[0:npts-1,qq] = x.f_fce[0:npts-1]
     f_fch[0:npts-1,qq] = x.f_fch[0:npts-1]

@@ -35,32 +35,40 @@ function distance_to_atmosphere,lshell,mlat,offset_alt=alt,opposite_hemisphere=o
     if goo[0] ne -1 then mlatt = mlat[goo,qq] else mlatt = mlat[*,qq]
 
 
-  for i=0,n_elements(lshellt)-1 do begin
+    for i=0,n_elements(lshellt)-1 do begin
 
-    ;determine arc length along Bo field line
-    dp = dipole(lshellt[i])
+      ;determine arc length along Bo field line
+      dp = dipole(lshellt[i])
 
-    ;field line length at Earth's surface
-    bolendiff = reverse(max(dp.s) - dp.s)
-    dpsr = reverse(dp.s)
+      ;field line length at Earth's surface
+      bolendiff = reverse(max(dp.s) - dp.s)
+      dpsr = reverse(dp.s)
 
-    ;element that represents height of FIREBIRD
-    goo = where(bolendiff ge alt)
-    ;print,max(dp.s) - dpsr[goo[0]]  ;almost exactly the same as altitude
+      ;element that represents height of FIREBIRD
+      goo = where(bolendiff ge alt)
+      ;print,max(dp.s) - dpsr[goo[0]]  ;almost exactly the same as altitude
 
-    ;length of field line from equator to alt
-    fb_s = dpsr[goo[0]]
+      ;length of field line from equator to alt (+ for both hemispheres).
+      ;For ex, alt may be the location of the FIREBIRD sat at 500 km
+      ;Will change only if field line changes as rays cross them
+      fb_s = dpsr[goo[0]]
 
-    tmp = where(dp.lat ge abs(mlatt[i]))
-    slen = dp.s[tmp[0]]
+      tmp = where(dp.lat ge abs(mlatt[i]))
+      ;length of field line from equator to current ray position (+ for both hemispheres)
+      slen = dp.s[tmp[0]]
 
-    ;precipitation in the same hemisphere (costreaming or Landau resonance)
-    if ~KEYWORD_SET(oh) then travellength_remaining[i,qq] = fb_s - slen
-    if KEYWORD_SET(oh) then travellength_remaining[i,qq] = fb_s + slen
+      ;precipitation in the same hemisphere (costreaming or Landau resonance)
+      ;Distance from source (e.g. mag eq) to observation (e.g. FIREBIRD in northern hemisphere)
+      ;minus the distance from eq to northern hemisphere where the e- is scattered
+      if ~KEYWORD_SET(oh) then travellength_remaining[i,qq] = fb_s - slen
+      ;precipitation in the opposite hemisphere (counter-streaming)
+      ;Distance from source (e.g. mag eq) to observation (e.g. FIREBIRD in northern hemisphere)
+      ;plus the extra distance from eq to southern hemisphere where the e- is scattered
+      if KEYWORD_SET(oh) then  travellength_remaining[i,qq] = fb_s + slen
 
-  endfor
+    endfor
 
-endfor ;nrays
+  endfor ;nrays
 
   travellength_remaining/=6370.
   return,travellength_remaining

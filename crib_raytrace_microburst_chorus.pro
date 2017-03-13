@@ -35,7 +35,8 @@ RBSPa_leq2 = RBSPa_leq + 0.15
 ;Set up for southward raytracing
 freqv = 1800.
 ti = read_write_trace_in(freq=freqv,$
-	mmult = .65,$
+	bmodel = 1,$
+	mmult = 1,$
 	lat=-0.93,$
 	theta=0.,$
 	phi=0.,$
@@ -45,7 +46,7 @@ ti = read_write_trace_in(freq=freqv,$
 	final_lat=-50,$
 	pplcp=3.,$
 	pplhw=0.5,$
-	drl=10000.)
+	drl=167.)
 
 	thetavals = 180+[-10.,-20,-30,-40.,-50.,-55,-60]
 
