@@ -38,6 +38,29 @@
 ;*****************************************************************************************
 ;-
 
+;Theta_kb (wave normal angle) diagram
+;Showing all the 45 deg angles
+;									Bo
+;       			  	|
+;          			  |
+;         +45     |   -45 (215)
+;                 |
+;Earth  --------------------- (equator)
+;       					|
+;       	 				|
+;        +135		  |   -135 (225)
+;     					  |
+
+
+;MIRROR IMAGES (earthward) theta_kb in dipole field
+;thetav = reverse((30+0)*indgen(nrayss)/(nrayss-1))-0
+;thetav = 180 + ((-30+0)*indgen(nrayss)/(nrayss-1))-0
+
+;MIRROR IMAGES (anti earthward) theta_kb in dipole field
+;thetav = reverse((-30+0)*indgen(nrayss)/(nrayss-1))-0
+;thetav = 180 + ((30+0)*indgen(nrayss)/(nrayss-1))-0
+
+
 pro create_rays_thetakb_spread,theta_kb_vals,title=title,rootdir=rootdir,freqs=freqs,geotime=geotime
 
   if ~KEYWORD_SET(geotime) then geotime = ''
