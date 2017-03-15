@@ -4,6 +4,29 @@
 ;Test how rays from a single point source near mag eq can spread out
 ;as they propagate to 20 deg mlat and beyond.
 
+;Theta_kb (wave normal angle) diagram
+;Showing all the 45 deg angles
+;									Bo
+;       			  	|
+;          			  |
+;         +45     |   -45 (215)
+;                 |
+;Earth  --------------------- (equator)
+;       					|
+;       	 				|
+;        +135		  |   -135 (225)
+;     					  |
+
+
+;MIRROR IMAGES (more earthward) in dipole field
+thetav = reverse((30+0)*indgen(nrayss)/(nrayss-1))-0
+thetav = 180 + ((-30+0)*indgen(nrayss)/(nrayss-1))-0
+
+;MIRROR IMAGES (anti earthward)
+thetav = reverse((-30+0)*indgen(nrayss)/(nrayss-1))-0
+thetav = 180 + ((30+0)*indgen(nrayss)/(nrayss-1))-0
+
+
 
 
 rbsp_efw_init
