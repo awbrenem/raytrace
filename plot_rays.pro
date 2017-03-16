@@ -40,7 +40,12 @@
 ;				k_spacing -> spacing of k-vector arrows (km). Defaults to 300 km
 ;				minv, maxv -> min and max color values to plot
 ;				raycolor -> pretty clear what this is...
-
+;				outsidecolor -> set to "fill" or "nofill". fill causes values outside the
+;						ray bounds to be filled as either black or red, depending on whether they
+;						are too high or too low. "nofill" leaves these as white so they don't
+;						show up on the plot.
+;
+;
 ;   CHANGED:  1)  NA [MM/DD/YYYY   v1.0.0]
 ;
 ;   NOTES:
@@ -65,9 +70,10 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 	psonly=psonly,$
 	k_spacing=k_spacing,$
 	minval=minv,maxval=maxv,$
-	raycolor=raycolor
+	raycolor=raycolor,$
+	outsidecolor=outsidecolor
 
-
+	if ~keyword_set(outsidecolor) then outsidecolor = 'fill'
 	if ~KEYWORD_SET(raycolor) then raycolor = 254
 	if ~KEYWORD_SET(minv) then minv=10.
 	if ~KEYWORD_SET(maxv) then maxv=500.
@@ -81,9 +87,9 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 		rbsp_efw_init
 		loadct,39
 		TVLCT, red, green, blue, /GET
-		red[0] = 254.
-		blue[0] = 254.
-		green[0] = 254.
+		red[0] = 255.
+		blue[0] = 255.
+		green[0] = 255.
 		file = '~/Desktop/code/Aaron/github.umn.edu/raytrace/myidlcolors1.tbl'
 		MODIFYCT, 75, 'aaronct', red, green, blue, FILE=file
 		loadct,75,file=file
@@ -164,7 +170,7 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 
 	if KEYWORD_SET(ray_vals) then begin
 
-		cgPlot, xcoordSM, zcoordSM, /NoData,xrange=xrangeM,yrange=zrangeM,xstyle=1,ystyle=1,position=aspect(1)
+		cgPlot,xcoordSM,zcoordSM,/NoData,xrange=xrangeM,yrange=zrangeM,xstyle=1,ystyle=1,position=aspect(1)
 
 		for qq=0,n_rays-1 do begin
 			;get rid of NaN values
@@ -182,15 +188,37 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 
 
 			s = n_elements(xcoordt)
-			colors = long(bytscl(ray_valst,min=minv,max=maxv))
+  		colors = long(bytscl(ray_valst,min=minv,max=maxv))
+;			colors = float(bytscl(ray_valst,min=minv,max=maxv))
+
+			boo = where(finite(ray_valst) eq 0.)
+			if boo[0] ne -1 then colors[boo] = !values.f_nan
+			boo = where(ray_valst eq -1000.)
+			if boo[0] ne -1 then colors[boo] = !values.f_nan
+			boo = where(ray_valst eq -1)
+			if boo[0] ne -1 then colors[boo] = !values.f_nan
+
+
+			;change too-low colors to black, if desired
 			goober = where(colors eq 0)
-			if goober[0] ne -1 then colors[goober] = 1
+			if goober[0] ne -1 then begin
+				if outsidecolor eq 'fill' then colors[goober] = 1
+				if outsidecolor eq 'nofill' then colors[goober] = 0
+			endif
+			;change too-high colors to red, if desired
+			goober = where(colors eq 255)
+			if goober[0] ne -1 then begin
+				if outsidecolor eq 'fill' then colors[goober] = 254
+				if outsidecolor eq 'nofill' then colors[goober] = 0
+			endif
+
 
 			meridx = sqrt(xcoordt^2 + ycoordt^2)
 
 			for j=0,s-2 do cgPlotS,[meridx[j]*cos(longitt_relative[j]*!dtor), $
 			meridx[j+1]*cos(longitt_relative[j+1]*!dtor)],$
 			[zcoordt[j], zcoordt[j+1]], Color=colors[j], Thick=2
+
 
 		endfor
 
