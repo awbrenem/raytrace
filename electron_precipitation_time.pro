@@ -1,8 +1,7 @@
 ;Calculates the time (sec) it takes an electron at a certain pitch angle
 ;to go from one location to another. E.g., the time it takes an electron
 ;at edge of loss cone at 20 deg mlat to arrive at FIREBIRD at 500 km.
-
-;NaN values mean the ray doesn't reach mlat_fin
+;NOTE: Values of -1 mean the ray doesn't reach mlat_fin!!!!
 
 
 ;Uses the equation for t1 in top right of pg of Miyoshi et al., 2010
@@ -41,7 +40,7 @@ function electron_precipitation_time,$
   for qq=0,nrays-1 do begin
 
     ;remove possible NaN values
-    goo = where(finite(lshell[*,qq]) ne 0)
+    goo = where(finite(lshell[*,qq]) ne 0.)
     if goo[0] ne -1 then lshellt = lshell[goo,qq] else lshellt = lshell[*,qq]
     if goo[0] ne -1 then mlatt = mlat[goo,qq] else mlatt = mlat[*,qq]
     ;if goo[0] ne -1 then pa_lct = pa_lc[goo,qq] else pa_lct = pa_lc[*,qq]
@@ -95,6 +94,10 @@ function electron_precipitation_time,$
 ;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then print,tots
 ;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then stop
 
+        ;if the ray doesn't reach the desired altitude, change the total
+        ;to -1. Leaving it as NaN can be confusing later for debugging
+        if finite(tots) eq 0 then tots = -1
+
       endif else begin
         ;Precipitation in opposite sector as scattering (counterstream)
 
@@ -103,7 +106,9 @@ function electron_precipitation_time,$
         good = reverse(good)
         dt = fltarr(n_elements(good))
 
-        ;Every term in the sum from s1 to s2
+        ;Every term in the sum from s1 to equator. dt represents the contribution
+        ;from each integration step. Near the equator these will all be pretty
+        ;similar
         for bb=0,n_elements(good)-2 do dt[bb] = dz[good[bb]]/sqrt(1-c*dp.B[good[bb]])
         ;Now sum the dt contributions from the interaction point to FIREBIRD
         tots1 = total(dt)
@@ -122,6 +127,10 @@ function electron_precipitation_time,$
 ;        if finite(tots) ne 0. and tots1 ne 0. then print,tots1,tots2
 ;        if finite(tots) ne 0. and tots1 ne 0. then stop
 
+        ;if the ray doesn't reach the desired altitude, change the total
+        ;to -1. Leaving it as NaN can be confusing later for debugging
+        if finite(tots) eq 0 then tots = -1
+
       endelse
 
 
@@ -130,6 +139,7 @@ function electron_precipitation_time,$
 
 
       timeprecip[i,qq] = const*tots
+
 
 
 
@@ -153,6 +163,16 @@ function electron_precipitation_time,$
     ;***Test output***
 
   endfor
+
+
+  ;change the bad values (negative ones) to a value of -1
+  ;Corresponds to situations in which the scattered electron doesn't
+  ;reach the desired final altitude
+  goo = where(timeprecip lt 0.)
+  if goo[0] ne -1 then timeprecip[goo] = -1
+
+  goo = where(timeprecip eq 0.)
+  if goo[0] ne -1 then timeprecip[goo] = !values.f_nan
 
   return,timeprecip
 
