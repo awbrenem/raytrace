@@ -2,9 +2,9 @@
 ;as they propagate to 20 deg mlat and beyond.
 
 
-function read_write_trace_in,freq=freq,lat=lat,alt=alt,longit=longit,theta=theta,phi=phi,$
-	final_alt=final_alt,final_lat=final_lat,mmult=mmult,model=model,ppdc=ppdc,pplhw=pplhw,$
-	pplcp=pplcp,drde=drde,dlhw=dlhw,dlcp=dlcp,arl=arl,drl=drl,nHp=nHp,nHe=nHe,nO=nO,temp=temp
+;function read_write_trace_in,freq=freq,lat=lat,alt=alt,longit=longit,theta=theta,phi=phi,$
+;	final_alt=final_alt,final_lat=final_lat,mmult=mmult,model=model,ppdc=ppdc,pplhw=pplhw,$
+;	pplcp=pplcp,drde=drde,dlhw=dlhw,dlcp=dlcp,arl=arl,drl=drl,nHp=nHp,nHe=nHe,nO=nO,temp=temp
 
 
 ;loc of PP = 3
@@ -35,7 +35,8 @@ ti = read_write_trace_in(freq=1700.,$
 
 
 ;	thetavals = [-40,-20, -10,0,10,20,40]
-	thetavals = [-30,-20, -10,0,10,20,30]
+;	thetavals = [-30,-20, -10,0,10,20,30]
+thetavals = 0.
 freqs = replicate(1700.,n_elements(thetavals))
 
 create_rays,thetavals,freqs=freqs,title='uB3'
