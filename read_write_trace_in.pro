@@ -41,7 +41,7 @@
 ;				lat  -> magnetic lat (deg)
 ;				final_lat -> final latitude (deg)
 ;				longit -> SM magnetic long (deg)
-;				alt -> initial altitude above surface (km)
+;				alt -> initial altitude above surface (km)  (calculate from RE, not Lshell)
 ;				final_alt -> final altitude (km)
 ;				freq -> frequency (Hz)
 ;				theta -> wave normal angle theta_kb (deg)
