@@ -103,6 +103,8 @@ if n_elements(dens_sc) eq 1 then dens_sc = [dens_sc,dens_sc]
 if n_elements(bo_sc) eq 1 then bo_sc = [bo_sc,bo_sc]
 
 
+;stop
+
 !p.multi = [0,0,2]
 plot, r, n, /ylog, xrange=[2,6], yrange=[1,10000], xgridstyle=1, xticklen=1, $
 	ygridstyle=1, yticklen=1, title='Equatorial Density Profile (cm-3)'
