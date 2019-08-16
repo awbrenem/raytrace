@@ -22,6 +22,7 @@
 ;           maxtrianglesize -> Triangles longer than this (RE) will be removed
 ;             defaults to 0.1
 ;           noplot --> don't do the contour plot, which takes time
+;   				oplotX -> [n,3] array of SM xcoord,ycoord,zcoord to overplot the symbol 'X'
 ;
 ; REQUIRES:
 ; HISTORY: Written by AWB 2016-12-22
@@ -35,7 +36,8 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   xgrid=xg,ygrid=yg,result=result,$
   mlats=mlats,lvals=lvals,rads=rads,ilats=ilats,$
   psonly=psonly,zbuffer=zbuffer,$
-  maxtrianglesize=mts,noplot=np
+  maxtrianglesize=mts,noplot=np,$
+  oplotX=oplotX
 
 
 
@@ -149,6 +151,17 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
     background=255,position=aspect(1),color=2
 
     oplot_earth_mlat_L_lines,Lv=[2,4,5,6,8]
+
+
+    ;Overplot sc positions, if requested
+  	if KEYWORD_SET(oplotX) then begin
+  		for bb=0,n_elements(oplotX[*,0])-1 do begin
+  			meridxtmp = sqrt(oplotX[bb,0]^2 + oplotX[bb,1]^2)
+  			px = meridxtmp*cos(lg_relative[0]*!dtor)
+  			pz = oplotX[bb,2]
+  			oplot,[px,px],[pz,pz],color=50,psym=4
+  		endfor
+  	endif
 
 
 
