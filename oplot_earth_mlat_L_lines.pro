@@ -5,7 +5,7 @@
 ;Lv -> Lvalue lines to plot. Defaults to [2,4,6,8]
 ;eq_plane -> Set to plot equatorial plane. Defaults to meridional plane
 
-pro oplot_earth_mlat_L_lines,latv=latv,Lv=Lv,eq_plane=eq_plane
+pro oplot_earth_mlat_l_lines,latv=latv,Lv=Lv,eq_plane=eq_plane
 
 
   ;overplot the Earth
