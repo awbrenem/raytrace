@@ -17,20 +17,6 @@
 ;   calculates time from scattering mlat (mlat) to equator, then adds this to time
 ;   from equator to mlat2
 
-;******
-;TESTING
-;lshell = 4.79
-;bmult = 1.5
-;mlatt = -12.6
-;alt = 500.
-;pa = 5.
-;e_energyt = 1.761 ;MeV
-;EMeV = 0.088
-
-;********
-
-
-
 function electron_precipitation_time,$
   lshell,$
   mlat,$
@@ -40,10 +26,9 @@ function electron_precipitation_time,$
   bmult=bmult,$
   opposite_hemisphere=oh
 
-
-
   if ~KEYWORD_SET(bmult) then bmult = 1.
 
+;  me = 9.11d-31   ;kg
 
   tmp = size(lshell)
   if tmp[0] ne 1 then nrays = tmp[2] else nrays = 1.
@@ -58,19 +43,31 @@ function electron_precipitation_time,$
     goo = where(finite(lshell[*,qq]) ne 0.)
     if goo[0] ne -1 then lshellt = lshell[goo,qq] else lshellt = lshell[*,qq]
     if goo[0] ne -1 then mlatt = mlat[goo,qq] else mlatt = mlat[*,qq]
-    ;if goo[0] ne -1 then e_energyt = e_energy[goo,qq] else e_energyt = e_energy[*,qq]
+    ;if goo[0] ne -1 then pa_lct = pa_lc[goo,qq] else pa_lct = pa_lc[*,qq]
+    if goo[0] ne -1 then e_energyt = e_energy[goo,qq] else e_energyt = e_energy[*,qq]
 
 
     for i=0,n_elements(lshellt)-1 do begin
 
-      dp = dipole(lshellt[i],bmult)
+;******
+;TESTING
+lshell = 5
+dp = dipole(lshell)
+mlatt = -27.2
+alt = 500.
+pa = 5.
+e_energyt = 1.761 ;MeV
+
+;********
 
       ;determine arc length along Bo field line
+;      dp = dipole(lshellt[i],bmult)
       z = dp.s
 
 
       ;find array location of scattering point
-      goo = where(dp.lat ge abs(mlatt[i]))
+;      goo = where(dp.lat ge abs(mlatt[i]))
+      goo = where(dp.lat ge abs(mlatt))
       loc1 = goo[0]
       ;find array location of "alt"
       goo = where(dp.r le (alt + 6370d))
@@ -80,6 +77,7 @@ function electron_precipitation_time,$
       ;Array of steps along the field line
       dz = z - shift(z,1)
       dz = dz[1:n_elements(dz)-1]
+      dz = 1000d*dz   ;m
 
 
       ;start/stop points (km) along field line for integration
@@ -96,18 +94,18 @@ function electron_precipitation_time,$
       if ~KEYWORD_SET(oh) then begin
 
         ;find elements to integrate over
-        good = where((z ge s1) and (z lt s2))
+        good = where((z ge s1) and (z le s2))
         integrand = fltarr(n_elements(good))
-        integrand2 = fltarr(n_elements(good))
-        dist_total = s2-s1
+        dist_total = max(z[good])
 
-        ;Every term in the sum from s1 to s2  (units if km)
+        ;Every term in the sum from s1 to s2
         for bb=0,n_elements(good)-1 do integrand[bb] = dz[good[bb]]/sqrt(1-c*dp.B[good[bb]])
 
-
-        ;Now sum the dz contributions from the interaction point to FIREBIRD
+        ;Now sum the dt contributions from the interaction point to FIREBIRD
         tots = total(integrand)  ;NaN values mean the ray doesn't reach mlat_fin
 
+;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then print,tots
+;        if finite(tots) ne 0. and tots ne 0. and tots le 10000. then stop
 
         ;if the ray doesn't reach the desired altitude, change the total
         ;to -1. Leaving it as NaN can be confusing later for debugging
@@ -117,11 +115,11 @@ function electron_precipitation_time,$
         ;Precipitation in opposite sector as scattering (counterstream)
 
         ;First integrate from location of scattering to magnetic eq
-        good = where((z ge 0) and (z lt s1)) ;find elements to integrate over
+        good = where((z ge 0) and (z le s1)) ;find elements to integrate over
         good = reverse(good)
         dt = fltarr(n_elements(good))
         ;Total distance traveled by Electron
-        dist_total = max(z[good]) - min(z[good])
+        dist_total = max(z[good])
 
         ;Every term in the sum from s1 to equator. dt represents the contribution
         ;from each integration step. Near the equator these will all be pretty
@@ -131,7 +129,7 @@ function electron_precipitation_time,$
         tots1 = total(dt)
 
         ;now integrate from magnetic eq to location of FB
-        good = where((z ge 0) and (z lt s2)) ;find elements to integrate over
+        good = where((z ge 0) and (z le s2)) ;find elements to integrate over
         dt = fltarr(n_elements(good))
         dist_total += max(z[good])
 
@@ -142,7 +140,8 @@ function electron_precipitation_time,$
         tots2 = total(dt)
 
         tots = tots1 + tots2 ;NaN values mean the ray doesn't reach mlat_fin
-
+;        if finite(tots) ne 0. and tots1 ne 0. then print,tots1,tots2
+;        if finite(tots) ne 0. and tots1 ne 0. then stop
 
         ;if the ray doesn't reach the desired altitude, change the total
         ;to -1. Leaving it as NaN can be confusing later for debugging
@@ -151,30 +150,51 @@ function electron_precipitation_time,$
       endelse
 
 
+;      energy = 1000d*e_energyt[i]*1.6d-19  ;Joules
+  ;    energy = 1000d*e_energyt*1.6d-19  ;Joules
+    ;const = sqrt(me/2d/energy)
 
-      ;total velocity (km/s)
-      vtots = 3d5*sqrt(1 - (0.511/(e_energy[i,qq]/1000. + 0.511))^2)
-      vpar = vtots*cos(pa*!dtor)
 
-      if tots ne -1 then begin
-        timeprecip[i,qq] = tots/vpar
-;        print,timeprecip[i,qq]
-;        print,'average field-aligned velocity/c = ',(dist_total/timeprecip[i,qq])/3d5
-      endif else timeprecip[i,qq] = !values.f_nan
+    ;DO PARTICLE DETECTORS MEASURE THE TOTAL ENERGY OR THE KINETIC ENERGY?
+      cms = 3d8  ;m/s
+      Erest = 0.511d6/1000.
+      EkeV = cos(pa*!dtor)*(e_energyt*1000. * cos(pa*!dtor)); - Erest)
+      gama = (1000.*EkeV + 0.511d6)/0.511d6
+      me = gama*0.511/cms^2 ;relativistic mass
+      ;me = 0.511/cms^2 ;mass
+      const = 1/sqrt(2*EkeV/me/1000.)   ;1/velocity
+
+
+timeprecip = const*tots
+print,timeprecip
+print,'average field-aligned velocity/c = ',dist_total/timeprecip/3d5
+
+
+;print,gama*0.511d6/1000. 0
+
+
+      timeprecip[i,qq] = const*tots
+
+
+
+
+      ;;Compare results to the result obtained by assuming that the Electron
+      ;;does not slow down the entire flight
+
+      ;;Initial velocity parallel (correct)
+;      c_ms = 2.99792458d8      ; -Speed of light in vacuum (m/s)
+;      fac1 = 0.511d6/(0.511d6 + 1000.*250000.)
+;      fac1 = 1. - fac1^2
+;      vpar0 = sqrt(c_ms^2*fac1)  ;m/s
+;
+;      print,1000.*s2/vpar0
 
     endfor
 
     ;***Test output***
     ;NaN values mean the ray doesn't reach mlat_fin
-    ;plot the following values:
-    ;---magnetic latitude of ray point
-    ;---cyclotron resonant energy (keV) (anomalous or normal)
-    ;---time to precipitate at "alt" (msec)
-    ;---average vpar/c  (will be higher for counterstreaming b/c particle spends more time away from mirror points.
-    ;                     It's just a check to be sure that average velocity doesn't exceed c)
-    ;NaN values mean that this particular particle doesn't reach "alt" before it is mirrored
-;    for u=0,340 do print,mlat[u,qq],e_energy[u,qq],1000.*timeprecip[u,qq],(dist_total/timeprecip[u,qq])/3d5
-;    stop
+    ;for u=0,340 do print,mlat[u,qq],e_energy[u,qq],1000.*timeprecip[u,qq]
+    ;stop
     ;***Test output***
 
   endfor
