@@ -1,6 +1,10 @@
 ;Set up and tweak density model for trace_in.txt
 ;Use the IRI (international reference ionosphere) model at:
 ;http://modelweb.gsfc.nasa.gov/models/iri.html
+;****(LINK NO LONGER WORKING...
+;****Try: https://ccmc.gsfc.nasa.gov/modelweb/models/iri2016_vitmo.php
+
+
 
 ;To do this I need to input the GEOGRAPHIC longitude and latitude of
 ;the meridional equator at L=1
@@ -10,6 +14,7 @@
 ;This is definitely working. I get almost identical results if I
 ;compare to the Interactive map to get geomagnetic or geographic coordinates:
 ;http://modelweb.gsfc.nasa.gov/models/cgm/cgm.html
+;****LINK NO LONGER WORKING
 ;Also, if I trace a ray at mlat=0 at 1000 km then I get the same values that
 ;were returned for the supposedly equal geographic coord.
 
@@ -33,8 +38,10 @@
 ;RAYS AT 500 KM.
 
 
-sc = 'STA'
-datetime = '2006-11-06/09:06:53'
+sc = 'RBSPa'
+;sc = 'STA'
+;datetime = '2006-11-06/09:06:53'
+datetime = '2017-08-21/01:45:00'
 
 if strmid(datetime,0,10) eq '2006-11-06' and sc eq 'STA' then num = 0.
 if strmid(datetime,0,10) eq '2006-11-17' and sc eq 'STA' then num = 1.
@@ -48,6 +55,7 @@ if strmid(datetime,0,10) eq '2006-12-12' and sc eq 'STB' then num = 7.
 
 
 restore,'~/Desktop/code/Aaron/datafiles/idlsave/stereo_perigee_GEOcoord.sav'
+restore,'~/Desktop/stereo_perigee_GEOcoord.sav'
 geo_xyz = {a1:struct_a1,a2:struct_a2,a3:struct_a3,a4:struct_a4,$
 	b1:struct_b1,b2:struct_b2,b3:struct_b3,b4:struct_b4}
 
