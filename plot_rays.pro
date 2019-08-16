@@ -32,7 +32,7 @@
 ;				zrangeE -> Equatorial y range in RE
 ;				colors -> color for each ray
 ;				colorsX -> color for each X overplotted
-;				oplotX -> [n,3] array of xcoord,ycoord,zcoord to overplot the symbol 'X'
+;				oplotX -> [n,3] array of SM xcoord,ycoord,zcoord to overplot the symbol 'X'
 ;				kvecs  -> overplot the k-unit-vectors at equally spaced intervals
 ;							[n,3] array of x,y,z values
 ;				Lsc    -> Overplots L-shell of sc
@@ -220,6 +220,7 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 			[zcoordt[j], zcoordt[j+1]], Color=colors[j], Thick=2
 
 
+
 		endfor
 
 		;Plot colorbar
@@ -257,7 +258,18 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 		endfor
 	endelse
 
-	oplot_earth_mlat_L_lines,Lv=[2,4,5,6,8]
+	;Overplot sc positions, if requested
+	if KEYWORD_SET(oplotX) then begin
+		for bb=0,n_elements(oplotX[*,0])-1 do begin
+			meridxtmp = sqrt(oplotX[bb,0]^2 + oplotX[bb,1]^2)
+			px = meridxtmp*cos(longitt_relative[0]*!dtor)
+			pz = oplotX[bb,2]
+			oplot,[px,px],[pz,pz],color=50,psym=4
+		endfor
+	endif
+
+
+	oplot_earth_mlat_l_lines,Lv=[2,4,5,6,8]
 
 
 
