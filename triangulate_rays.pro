@@ -58,10 +58,12 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
   gridspacing = fltarr(2)
   gridspacing = [1./nlines,1./nlines]
   if ~KEYWORD_SET(limits) then limits = [0,-2,6,0]
-  if ~keyword_set(minv) then minv = min(vals)
+  if ~keyword_set(minv) then minv = 0.
   if ~keyword_set(maxv) then maxv = max(vals)
   if ~KEYWORD_SET(nlvls) then nlvls=10
 
+
+  if nlvls le 5 then print,'***WARNING, < 5 COLOR LEVELS DEFINED. COLOR MAY NOT BE ACCURATE*****'
 
   ;create relative longitude variable. The initial longitude for each ray helps to define
   ;the meridional plane. As the longitude changes for each ray we must take this into account.
@@ -146,9 +148,28 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
 
   if ~KEYWORD_SET(np) then begin
 
-    contour,result,xg,yg,nlevels=nlvls,min_value=minv,max_value=maxv,$
+
+		;modify color table so first element is white
+		rbsp_efw_init
+		loadct,39
+		TVLCT, red, green, blue, /GET
+		red[0] = 255.
+		blue[0] = 255.
+		green[0] = 255.
+		file = '~/Desktop/code/Aaron/github.umn.edu/raytrace/myidlcolors1.tbl'
+		MODIFYCT, 75, 'aaronct', red, green, blue, FILE=file
+		loadct,75,file=file
+
+
+    lvls = indgen(nlvls)*maxv/(nlvls-1) + minv
+
+    ;make values over the max level below the max level so they plot as red
+    boo = where(result gt max(lvls))
+    if nlvls ge 2 then if boo[0] ne -1 then result[boo] = lvls[nlvls-2]
+
+    contour,result,xg,yg,$
     /cell_fill,xrange=xrange,yrange=yrange,xstyle=1,ystyle=1,$
-    background=255,position=aspect(1),color=2
+    background=255.,position=aspect(1),levels=lvls,color=2
 
     oplot_earth_mlat_L_lines,Lv=[2,4,5,6,8]
 
@@ -170,6 +191,8 @@ pro triangulate_rays,xcoord,ycoord,zcoord,longit,vals,$
     nticks = 7.
     tn = (indgen(nticks)/(nticks-1))*(maxv-minv)  + minv
     tn = strtrim(string(tn,format='(f8.2)'),2)
+
+
     colorbar,POSITION=[0.15, 0.75, 0.85, 0.77],$
     divisions=nticks-1,ticknames=tn,charsize = 0.8,range=[minv,maxv],color=2
 
