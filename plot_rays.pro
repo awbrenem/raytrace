@@ -75,7 +75,7 @@ pro plot_rays,rayx,rayy,rayz,longit,ray_vals=ray_vals,$
 
 	if ~keyword_set(outsidecolor) then outsidecolor = 'fill'
 	if ~KEYWORD_SET(raycolor) then raycolor = 254
-	if ~KEYWORD_SET(minv) then minv=10.
+	if ~KEYWORD_SET(minv) then minv=0.
 	if ~KEYWORD_SET(maxv) then maxv=500.
 	if ~KEYWORD_SET(alpha) then alpha = 0.
 	if ~keyword_set(k_spacing) then k_spacing = 300.
