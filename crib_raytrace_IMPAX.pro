@@ -99,7 +99,7 @@ lval_extract = 5.
 ;--------------------------------------------
 ;Set up model for observed density, Bo.
 altv=(6370.*fu3_l)-6370.
-create_rays_general,1000.,theta=0,alt=altv,lat=-51.,long=85.,title='uB3',geotime='2016-08-30/20:47'
+create_rays_general,1000.,theta=0,alt=altv,lat=0.,long=85.,title='uB3',geotime='2016-08-30/20:47'
 dens_bo_profile,1000.,dens_sc=10,bo_sc=95,L_sc=fu3_l;,/ps
 ;--------------------------------------------
 ;geolat = -51.026791
@@ -116,7 +116,7 @@ ti = read_write_trace_in(freq=freqv,$
 	alt=(6370.*eq_re)-6370.,$
 	final_alt=4000.,$
 	model=0,$
-	final_lat=-40,$
+	final_lat=40,$
 	pplcp=3.,$
 	pplhw=0.5,$
 	drl=20.)
@@ -128,20 +128,14 @@ ti = read_write_trace_in(freq=freqv,$
 	dens_bo_profile,freqv,dens_sc=10,bo_sc=95,L_sc=fu3_l;,/ps
 
 
-;	thetavals = 180+[-10.,-20,-30,-40.,-50.,-55,-60]
-;thetavals = [10.,20,30,40.,50.,60.,70.]
 
-	;Only + values reasonably reach Arase
-;	thetavals = [40,50,60.]
-
-	;Co-streaming resonance (Southward, anti-Earthward rays)
-	thetavals = 90 + [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
-;	thetavals = [150,160]
-	opposite_hemisphere = 0
+;	;Co-streaming resonance (Southward, anti-Earthward rays)
+;	thetavals = 90 + [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
+;	opposite_hemisphere = 0
 
 	;Counterstreaming resonance (Northward, anti-Earthward rays)
-;	thetavals = [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
-;	opposite_hemisphere = 1
+	thetavals = [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
+	opposite_hemisphere = 1
 
 	time = '2016-08-30/20:47'
 
@@ -207,12 +201,19 @@ ti = read_write_trace_in(freq=freqv,$
 ;Manually set indices of slice array that correspond to the min and max precipitating energies
 ;Because there is uncertaintly in the channel energy (e.g. 220-283 keV bin) I'll have a min and max low energy 
 ;and a min and max high energy
-;    fblow = [220.,283.,384.,520.,721.]
-;    fbhig = [283.,384.,520.,721.,985.]
+    fblow = [220.,283.,384.,520.,721.]
+    fbhig = [283.,384.,520.,721.,985.]
+;ecenter = (fblow + fbhig)/2.
+;eerror = (fbhig - fblow)/2.
 
 
-ind0 = [195.,215.]
-ind1 = [285.,308.]
+tmp1 = where(energy_slice ge fblow[0])
+tmp2 = where(energy_slice ge fbhig[0])
+ind0 = [tmp1[0],tmp2[0]]
+tmp1 = where(energy_slice ge fblow[3])
+tmp2 = where(energy_slice ge fbhig[3])
+ind1 = [tmp1[0],tmp2[0]]
+
 print,energy_slice[ind0], energy_slice[ind1]   ;keV
 
 
@@ -284,7 +285,7 @@ stop
 
 	plot_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ray_vals=ttotal,$
 	xrangeM=[2,6],zrangeM=[-2,2],$
-	Lsc=[fu3_l],minval=220,maxval=985
+	Lsc=[fu3_l[0]],minval=220,maxval=985
 
 	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ttotal,minv=220.,maxv=985.,Lsc=[fu3_l],$
 	limits=[0,-3,6,3],nlvls=50,xgrid=xg,ygrid=yg,result=totaltime_gridv;,/zbuffer
@@ -332,8 +333,8 @@ latrange_hig = mlatrange[valshig]
 
 ;The min/max ALLOWABLE arrival time differences are a subset of the above, and are determined 
 ;by the max/min errors to the best-fit slope from microburst_fit_slope.pro
-minallowt = 69.  ;msec
-maxallowt = 75.  ;msec
+minallowt = 60.  ;msec
+maxallowt = 80.  ;msec
 ;minallowt = 0.  ;msec
 ;maxallowt = 10000.  ;msec
 goo = where((final_deltat ge minallowt) and (final_deltat le maxallowt))
@@ -347,42 +348,36 @@ lats_low_fin = fltarr(n_elements(indxy[0,*]))
 lats_hig_fin = fltarr(n_elements(indxy[0,*]))
 
 for i=0,n_elements(indxy[0,*])-1 do lats_low_fin[i] = latrange_low[indxy[0,i]]
-;RBSP_EFW> print,min(lats_low_fin)
-;     -19.2793
-;RBSP_EFW> print,max(lats_low_fin)
-;     -17.5676
+print,min(lats_low_fin)
+print,max(lats_low_fin)
 for i=0,n_elements(indxy[1,*])-1 do lats_hig_fin[i] = latrange_hig[indxy[1,i]]
-;RBSP_EFW> print,min(lats_hig_fin)
-;     -27.6577
-;RBSP_EFW> print,max(lats_hig_fin)
-;     -25.6757
+print,min(lats_hig_fin)
+print,max(lats_hig_fin)
 
-;******TEST: IF ALL FINAL DELTA-TIMES ARE ALLOWED, THE ABOVE SHOULD COMPARE EXACTLY TO 
-mlatrange[ind0]
-mlatrange[ind1]
-;****NOTE THAT THEY'RE SLIGHTLY DIFFERENT
+;;******TEST: IF ALL FINAL DELTA-TIMES ARE ALLOWED, THE ABOVE SHOULD COMPARE EXACTLY TO 
+;mlatrange[ind0]
+;mlatrange[ind1]
+;;****NOTE THAT THEY'RE SLIGHTLY DIFFERENT
 
 
-;Maximum possible source extent 
+;Maximum possible source extent for acceptable arrival time differences b/t minallowt and maxallowt
 deltalat_fin_max = abs(max(lats_hig_fin)) - abs(min(lats_low_fin))
-
-
-
-
-;Determine range in location of scattering 
-;ind0 = [195.,215.]
-;ind1 = [285.,308.]
-
-
-
-
-;print,energy_slice[ind0], energy_slice[ind1]   ;keV
+print,'Max mlat source size =',deltalat_fin_max
+print,'Range of lats that may be source for lowest energy bin = ',min(lats_low_fin),max(lats_low_fin)
+print,'Range of lats that may be source for highest energy bin = ',min(lats_hig_fin),max(lats_hig_fin)
 
 
 
 
 
 stop
+
+
+
+
+
+
+
 
 
 
