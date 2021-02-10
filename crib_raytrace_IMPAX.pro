@@ -1,6 +1,6 @@
 ;Test how much better having 10 AFIRE (FIREBIRD) channels in IMPAX will have vs 
 ;the 5 channels on FIREBIRD. 
-;Microburst with dispersion observed on 2016-08-30/20:47 - 20:48 
+;Microburst with dispersion observed on 2016-08-30/20:47:27.900 (FB is at L=6.1)
 ;During this time RBSPa is in the same region near equator and sees strong lower band chorus activity at ~ 1 kHz. 
 ;***CHECK TO SEE HOW CLOSE CONJUNCTION IS AND WHETHER THERE IS BURST DATA AVAILABLE
 
@@ -27,16 +27,64 @@
 
 ;****TEST RESULTS OF SIMULATED MICROBURST SLOPE WITH NO NOISE (SEE microburst_fit_slope.pro)
 ;***ARRIVAL TIME DIFFERENCE OF UB B/T 220 AND 721 KEV
-;5 channel --> [45.55,53.55,65.07]  (220-721 keV)
-;10 channel--> [55.56,58.56,62.06]  (220-721 keV)
+;5 channel --> [45.55,53.55,65.57]  (220-721 keV)
+;10 channel--> [55.05,58.56,62.56]  (220-721 keV)
 ;1000 channel->[60.06] (CORRECT ANSWER FOR SIMULATED DATA)  (220-721 keV)
-;REAL DATA --> [58.06,68.07,83.08]  (220-721 keV)
 
 
 
-rbsp_efw_init
 
-;FU3 location at 2016-08-30/20:47 
+;---------------------------------------------------
+;USER INPUT 
+;---------------------------------------------------
+
+
+N_S_rays = 'N'
+;EQUATORIAL SOURCE 
+eq_re = 6.15
+;nbins = '5'
+nbins = '10'
+
+;---------------------------------------------------
+;END USER INPUT 
+;---------------------------------------------------
+
+
+
+
+;Manually set indices of slice array that correspond to the min and max precipitating energies
+;Because there is uncertaintly in the channel energy (e.g. 220-283 keV bin) I'll have a min and max low energy 
+;and a min and max high energy
+if nbins eq '5' then begin 
+    fblow = [220.,283.,384.,520.,721.]
+    fbhig = [283.,384.,520.,721.,985.]
+	bin0 = 0.  ;lowest energy bin to consider 
+	bin1 = 3.  ;highest energy bin to consider
+endif
+
+if nbins eq '10' then begin 
+	fblow = [220.,251.,283.,333.,384.,452.,520.,620.,721.,853.]
+	fbhig = [251.,283.,333.,384.,452.,520.,620.,721.,853.,985.]
+	bin0 = 0.  ;lowest energy bin to consider 
+	bin1 = 7.  ;highest energy bin to consider
+endif
+
+;The min/max ALLOWABLE arrival time differences are a subset of the above, and are determined 
+;by the max/min errors to the best-fit slope from microburst_fit_slope.pro
+
+if nbins eq '5' then begin 
+	minallowt = 45.55  ;msec
+	maxallowt = 65.57  ;msec
+endif
+if nbins eq '10' then begin 
+	minallowt = 55.05  ;msec
+	maxallowt = 62.56  ;msec
+endif
+
+
+
+
+;FU3 location at 2016-08-30/20:47:27.900
 geolat = -51.026791
 geolon = 84.924263
 alt = 504.91843 + 6370.
@@ -47,7 +95,7 @@ xgeo = alt*cos(!dtor*geolat)*cos(!dtor*geolon)
 ygeo = alt*cos(!dtor*geolat)*sin(!dtor*geolon)
 zgeo = alt*sin(!dtor*geolat)
 
-t0 = time_double('2016-08-30/20:47')
+t0 = time_double('2016-08-30/20:47:27.900')
 times = dindgen(20)/1. + t0
 
 store_data,'fb3_geo',data={x:times,y:[[replicate(xgeo,20)],[replicate(ygeo,20)],[replicate(zgeo,20)]]}
@@ -83,27 +131,29 @@ tplot,'fb3_sm'
 
 
 
+rbsp_efw_init
+
 
 ;------------------------------------------------
 ;FIRST VERSION IS FOR REGULAR CYCLOTRON resonance
 ;------------------------------------------------
 
 
-;consider source at equator
-;fu3_l = 4.9
-eq_re = 4.9
 
 ;Final L=value to extract data from 
-lval_extract = 5.
+lval_extract = L
 
 ;--------------------------------------------
 ;Set up model for observed density, Bo.
-altv=(6370.*fu3_l)-6370.
+altv=(6370.*lval_extract)-6370.
 create_rays_general,1000.,theta=0,alt=altv,lat=0.,long=85.,title='uB3',geotime='2016-08-30/20:47'
-dens_bo_profile,1000.,dens_sc=10,bo_sc=95,L_sc=fu3_l;,/ps
+dens_bo_profile,1000.,dens_sc=10,bo_sc=95,L_sc=lval_extract;,/ps
 ;--------------------------------------------
 ;geolat = -51.026791
 ;geolon = 84.924263
+
+finlat = 40. 
+if N_S_rays eq 'S' then finlat *= -1
 
 freqv = 1000.
 ti = read_write_trace_in(freq=freqv,$
@@ -116,7 +166,7 @@ ti = read_write_trace_in(freq=freqv,$
 	alt=(6370.*eq_re)-6370.,$
 	final_alt=4000.,$
 	model=0,$
-	final_lat=40,$
+	final_lat=finlat,$
 	pplcp=3.,$
 	pplhw=0.5,$
 	drl=20.)
@@ -125,17 +175,21 @@ ti = read_write_trace_in(freq=freqv,$
 	;Test out the density model
 	create_rays_thetakb_spread,0.,freqs=freqv,title='uB3',geotime=time
 ;	rba_l2 = rba_l
-	dens_bo_profile,freqv,dens_sc=10,bo_sc=95,L_sc=fu3_l;,/ps
+	dens_bo_profile,freqv,dens_sc=10,bo_sc=95,L_sc=lval_extract;,/ps
 
 
 
-;	;Co-streaming resonance (Southward, anti-Earthward rays)
-;	thetavals = 90 + [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
-;	opposite_hemisphere = 0
+;	;---Co-streaming resonance (Southward, anti-Earthward rays)
+	if N_S_rays eq 'S' then begin 
+		thetavals = 90 + [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
+		opposite_hemisphere = 0
+	endif 
 
-	;Counterstreaming resonance (Northward, anti-Earthward rays)
-	thetavals = [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
-	opposite_hemisphere = 1
+	;---Counterstreaming resonance (Northward, anti-Earthward rays)
+	if N_S_rays eq 'N' then begin 
+		thetavals = [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85]
+		opposite_hemisphere = 1
+	endif
 
 	time = '2016-08-30/20:47'
 
@@ -156,7 +210,7 @@ ti = read_write_trace_in(freq=freqv,$
 
 
 
-
+stop
 
 
 	;-----------------------------------------------------
@@ -182,46 +236,43 @@ ti = read_write_trace_in(freq=freqv,$
 
 
 	plot_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ray_vals=eplot,$
-		xrangeM=[2,6],zrangeM=[-2,2],$
-		Lsc=[fu3_l],minval=5,maxval=1000
+		xrangeM=[1,7],zrangeM=[-3,3],$
+		Lsc=[lval_extract],minval=5,maxval=1000
 
-	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,eplot,minv=5.,maxv=1500.,Lsc=[fu3_l],$
-		limits=[0,-3,6,3],nlvls=50,oplotX=oplotcoord,result=energy_gridv,xgrid=xg,ygrid=yg
+	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,eplot,minv=5.,maxv=1500.,Lsc=[lval_extract],$
+		limits=[1,-3,7,3],nlvls=50,oplotX=oplotcoord,result=energy_gridv,xgrid=xg,ygrid=yg
 
 
 	;Extract slice along single L-value
-
 	mlatrange = 90.*indgen(1000)/999.
 	if opposite_hemisphere ne 1 then mlatrange *= -1
-	energy_slice = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,energy_gridv,gridpts=pts)
+	energy_slice = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,energy_gridv,gridpts=pts)
 
 	for ii=0,999 do print,ii,mlatrange[ii],energy_slice[ii]
 	;plot,mlatrange,energy_slice,xrange=[10,30],xtitle='mlat (deg)',ytitle='energy (keV) counterstream cyclotron res'
 
-;Manually set indices of slice array that correspond to the min and max precipitating energies
-;Because there is uncertaintly in the channel energy (e.g. 220-283 keV bin) I'll have a min and max low energy 
-;and a min and max high energy
-    fblow = [220.,283.,384.,520.,721.]
-    fbhig = [283.,384.,520.,721.,985.]
-;ecenter = (fblow + fbhig)/2.
-;eerror = (fbhig - fblow)/2.
+
+	cond1 = where(energy_slice ge fblow[bin0]) 
+	cond2 = where(energy_slice le fbhig[bin0]) 
+	tmp = setintersection(cond1, cond2)
+	ind0 = [tmp[0],tmp[n_elements(tmp)-1]]
+
+	cond1 = where(energy_slice ge fblow[bin1]) 
+	cond2 = where(energy_slice le fbhig[bin1]) 
+	tmp = setintersection(cond1, cond2)
+	ind1 = [tmp[0],tmp[n_elements(tmp)-1]]
 
 
-tmp1 = where(energy_slice ge fblow[0])
-tmp2 = where(energy_slice ge fbhig[0])
-ind0 = [tmp1[0],tmp2[0]]
-tmp1 = where(energy_slice ge fblow[3])
-tmp2 = where(energy_slice ge fbhig[3])
-ind1 = [tmp1[0],tmp2[0]]
 
+print,'MAKE SURE THAT THE FIELD LINE OF FIREBIRD SEES ELECTRONS IN THE LOW AND HIGH ENERGY RANGE CHANNELS'
 print,energy_slice[ind0], energy_slice[ind1]   ;keV
-
+stop  ;MAKE SURE ENTIRE DESIRED ENERGY RANGE IS FOUND ON FIELD LINE OF FIREBIRD. 
+;IF NOT, THEN MOVE SOURCE
 
 ;****
 ;MLATS WHERE THE ENTIRE RANGE OF MICROBURSTS CAN BE OBSERVED 
 ;MLAT = 17 DEG (295 KEV) TO 22 DEG (711 KEV)
 
-stop
 
 
 
@@ -233,12 +284,12 @@ stop
 ;		xrangeM=[2,6],zrangeM=[-2,2],$
 ;		oplotX=oplotcoord,minval=0,maxval=0.5
 ;
-;	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,timeG,minv=0.,maxv=0.5,Lsc=[fu3_l],$
+;	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,timeG,minv=0.,maxv=0.5,Lsc=[lval_extract[0]],$
 ;		limits=[0,-3,6,3],nlvls=100,xgrid=xg,ygrid=yg,result=timeG_gridv,xrange=[2,6],yrange=[-2,2],$
 ;		oplotX=oplotcoord;,/psonly
 ;
 ;	;Extract slice along single L-value
-;	timeG_slice = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,timeG_gridv,gridpts=pts)
+;	timeG_slice = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,timeG_gridv,gridpts=pts)
 ;
 ;	for ii=0,89 do print,mlatrange[ii],timeG_slice[ii]
 
@@ -264,15 +315,14 @@ stop
 
 ;	plot_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ray_vals=tarr,$
 ;		xrangeM=[2,6],zrangeM=[-2,2],$
-;		Lsc=[fu3_l],minval=5,maxval=200
+;		Lsc=[lval_extract[0]],minval=5,maxval=200
 ;
-;	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,tarr,minv=5.,maxv=200.,Lsc=[fu3_l],$
+;	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,tarr,minv=5.,maxv=200.,Lsc=[lval_extract[0]],$
 ;		limits=[0,-3,6,3],nlvls=50,oplotX=oplotcoord,result=tarr_gridv
 
 
 ;	;Extract slice along single L-value
-;	tarr_slice = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,tarr_gridv,gridpts=pts)
-;
+;	tarr_slice = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,tarr_gridv,gridpts=pts)
 ;	for ii=0,89 do print,mlatrange[ii],tarr_slice[ii]
 ;
 
@@ -284,19 +334,21 @@ stop
 	ttotal = tarr + timeg*1000.
 
 	plot_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ray_vals=ttotal,$
-	xrangeM=[2,6],zrangeM=[-2,2],$
-	Lsc=[fu3_l[0]],minval=220,maxval=985
+	xrangeM=[1,7],zrangeM=[-3,3],$
+	Lsc=[lval_extract[0]],minval=220,maxval=985
 
-	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ttotal,minv=220.,maxv=985.,Lsc=[fu3_l],$
-	limits=[0,-3,6,3],nlvls=50,xgrid=xg,ygrid=yg,result=totaltime_gridv;,/zbuffer
+;	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ttotal,minv=220.,maxv=2000.,Lsc=[lval_extract[0]],$
+;	limits=[1,-3,7,3],nlvls=50,xgrid=xg,ygrid=yg,result=totaltime_gridv;,/zbuffer
+	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ttotal,Lsc=[lval_extract[0]],$
+	limits=[1,-3,7,3],nlvls=50,xgrid=xg,ygrid=yg,result=totaltime_gridv;,/zbuffer
 
 	;Get values of grid points that correspond to a particular L
-;		totaltimeL[*,bbq] = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,totaltime,gridpts=pts)
-;		totaltimeL = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,totaltime,gridpts=pts)
+;		totaltimeL[*,bbq] = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,totaltime,gridpts=pts)
+;		totaltimeL = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,totaltime,gridpts=pts)
 
 	;Extract slice along single L-value
-	totaltimeL_slice = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,totaltime_gridv,gridpts=pts)
-	for ii=0,999 do print,mlatrange[ii],totaltimeL_slice[ii]
+	totaltimeL_slice = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,totaltime_gridv,gridpts=pts)
+	for ii=0,999 do print,ii,mlatrange[ii],totaltimeL_slice[ii]
 
 
 print,totaltimeL_slice[ind0]
@@ -308,9 +360,11 @@ print,totaltimeL_slice[ind1]    ;msec time difference of arrival b/t min and max
 ;Positive values mean that lower energies arrive first (like positive slope). 
 
 ;Min difference of arrival times 
-print,max(totaltimeL_slice[ind1]) - min(totaltimeL_slice[ind0])
+print,max(totaltimeL_slice[ind1]) - min(totaltimeL_slice[ind0]), ' msec'
 ;Max difference of arrival times
-print,min(totaltimeL_slice[ind1]) - max(totaltimeL_slice[ind0])
+print,min(totaltimeL_slice[ind1]) - max(totaltimeL_slice[ind0]), ' msec'
+stop
+
 
 ;Calculate 2D array with all possible arrival time differences for the entire range of acceptable 
 ;scattering locations for the low energy and high energy
@@ -319,6 +373,7 @@ nind1 = ind1[1]-ind1[0]
 final_deltat = fltarr(nind0,nind1)
 for i=0,nind0-1 do begin $
 	for j=0,nind1-1 do final_deltat[i,j] = totaltimeL_slice[ind1[0]+j] - totaltimeL_slice[ind0[0]+i]
+endfor
 
 ;low energy lat values 
 nelem = abs(ind0[1]-ind0[0])
@@ -329,12 +384,14 @@ valshig = indgen(nelem) + min(ind1)
 latrange_hig = mlatrange[valshig]
 
 
+stop
+;**************************
+;BELOW WE TEST DIFFERENT MIN AND MAX SLOPES
+;**************************
 
 
-;The min/max ALLOWABLE arrival time differences are a subset of the above, and are determined 
-;by the max/min errors to the best-fit slope from microburst_fit_slope.pro
-minallowt = 60.  ;msec
-maxallowt = 80.  ;msec
+
+
 ;minallowt = 0.  ;msec
 ;maxallowt = 10000.  ;msec
 goo = where((final_deltat ge minallowt) and (final_deltat le maxallowt))
@@ -348,23 +405,94 @@ lats_low_fin = fltarr(n_elements(indxy[0,*]))
 lats_hig_fin = fltarr(n_elements(indxy[0,*]))
 
 for i=0,n_elements(indxy[0,*])-1 do lats_low_fin[i] = latrange_low[indxy[0,i]]
-print,min(lats_low_fin)
-print,max(lats_low_fin)
+;print,min(lats_low_fin)
+;print,max(lats_low_fin)
 for i=0,n_elements(indxy[1,*])-1 do lats_hig_fin[i] = latrange_hig[indxy[1,i]]
-print,min(lats_hig_fin)
-print,max(lats_hig_fin)
+;print,min(lats_hig_fin)
+;print,max(lats_hig_fin)
 
+;stop
 ;;******TEST: IF ALL FINAL DELTA-TIMES ARE ALLOWED, THE ABOVE SHOULD COMPARE EXACTLY TO 
 ;mlatrange[ind0]
 ;mlatrange[ind1]
 ;;****NOTE THAT THEY'RE SLIGHTLY DIFFERENT
 
 
+
+
 ;Maximum possible source extent for acceptable arrival time differences b/t minallowt and maxallowt
 deltalat_fin_max = abs(max(lats_hig_fin)) - abs(min(lats_low_fin))
+print,'Rays heading '+N_S_rays+' for source at L=',eq_re,' for min/max slope from '+nbins+' energy bin simulation'
 print,'Max mlat source size =',deltalat_fin_max
 print,'Range of lats that may be source for lowest energy bin = ',min(lats_low_fin),max(lats_low_fin)
 print,'Range of lats that may be source for highest energy bin = ',min(lats_hig_fin),max(lats_hig_fin)
+
+stop
+
+;***********************************
+;5 ENERGY BINS
+
+
+;Northward: Counterstreaming 1 kHz point source tests (45.55-65.57 msec delta-t allowed):
+
+	;L=5.9 - NO SOLUTION 
+	;L=6.0
+		;Max mlat source size =      5.8
+		;Range of lats that may be source for lowest energy bin =       26.0360      27.2072
+		;Range of lats that may be source for highest energy bin =       30.4505      31.8919
+	;L=6.15
+		;Max mlat source size =      5.76577
+		;Range of lats that may be source for lowest energy bin =       27.0270      28.1982
+		;Range of lats that may be source for highest energy bin =       31.4414      32.7928
+
+;Southward: Co-streaming 1 kHz point source tests 
+	;L=6.0 - NO SOLUTION
+	;L=6.1 - NO SOLUTION (not full upper energy range, and no final solution)
+	;L=6.15 
+		;Max mlat source size =      3.51351
+		;Range of lats that may be source for lowest energy bin =      -30.2703     -29.2793
+		;Range of lats that may be source for highest energy bin =      -34.9550     -33.7838
+
+
+;***********************************
+;10 ENERGY BINS
+
+
+;Northward: Counterstreaming 1 kHz point source tests (55.05-62.56 msec delta-t allowed):
+	;L=6.0
+		;Max mlat source size =      5.76577
+		;Range of lats that may be source for lowest energy bin =       26.0360      26.2162
+		;Range of lats that may be source for highest energy bin =       31.3514      31.8018
+	;L=6.15
+		;Max mlat source size =      5.76577
+		;Range of lats that may be source for lowest energy bin =       27.0270      27.4775
+		;Range of lats that may be source for highest energy bin =       32.2523      32.7928
+
+
+;Southward: Co-streaming 1 kHz point source tests 
+
+	;L=6.15 - NO SOLUTION
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -390,15 +518,15 @@ stop
 
 	;Plot the wave normal angle along the trajectory
 	plot_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,ray_vals=thk,$
-		xrangeM=[2,6],zrangeM=[-2,2],$
+		xrangeM=[1,7],zrangeM=[-3,3],$
 		oplotX=oplotcoord,minval=0,maxval=90
 
-	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,thk,minv=0.,maxv=90.,Lsc=[fu3_l[0]],$
-		limits=[0,-3,6,3],nlvls=100,xgrid=xg,ygrid=yg,result=tkb_gridv,xrange=[2,6],yrange=[-2,2],$
+	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,thk,minv=0.,maxv=90.,Lsc=[lval_extract[0]],$
+		limits=[1,-3,7,3],nlvls=100,xgrid=xg,ygrid=yg,result=tkb_gridv,xrange=[2,6],yrange=[-2,2],$
 		oplotX=oplotcoord;,/psonly
 
 	;Extract slice along single L-value
-	thk_slice = extract_lshell_mlat_slice(lval_extract,mlatrange,xg,yg,tkb_gridv,gridpts=pts)
+	thk_slice = extract_lshell_mlat_slice(lval_extract[0],mlatrange,xg,yg,tkb_gridv,gridpts=pts)
 
 	for ii=0,89 do print,mlatrange[ii],thk_slice[ii]
 	;I find the wave normal angle at Arase is ~72 deg
@@ -408,8 +536,8 @@ stop
 	;-----------------------------------------------------
 	;Determine initial wave normal angle
 	;Get ray initial theta_kb values
-	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,thk0,minv=1.,maxv=60.,Lsc=[fu3_l[0]],$
-	limits=[0,-3,6,3],nlvls=50,xgrid=xg,ygrid=yg,result=tmpvar,/zbuffer
+	triangulate_rays,xcoordSM,ycoordSM,zcoordSM,longitSM,thk0,minv=1.,maxv=60.,Lsc=[lval_extract[0]],$
+	limits=[1,-3,7,3],nlvls=50,xgrid=xg,ygrid=yg,result=tmpvar,/zbuffer
 	for i=0,89 do thk0_finL[i,bbq] = tmpvar[ptsx[i],ptsz[i]]
 	print,'theta_kb initial value along slice = ',thk0_finL[*,bbq]
 
